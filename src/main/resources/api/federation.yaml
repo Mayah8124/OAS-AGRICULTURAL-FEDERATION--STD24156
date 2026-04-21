@@ -746,7 +746,7 @@ components:
       type: object
       additionalProperties: false
       required:
-        - sponsorMemberId
+        - sponsors
         - firstName
         - lastName
         - birthDate
@@ -756,12 +756,14 @@ components:
         - phone
         - email
         - membershipFee
+        - annualDuesAmount
         - paymentMethod
       properties:
-        sponsorMemberId:
-          type: integer
-          format: int32
-          minimum: 1
+        sponsors:
+          type: array
+          minItems: 2
+          items:
+            $ref: '#/components/schemas/Sponsor'
         firstName:
           type: string
         lastName:
@@ -784,8 +786,29 @@ components:
           type: integer
           format: int32
           minimum: 0
+          description: Frais d'adhésion (50 000 Ar).
+        annualDuesAmount:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Montant total des cotisations annuelles obligatoires à payer lors de l'adhésion.
         paymentMethod:
           $ref: '#/components/schemas/PaymentMethod'
+
+    Sponsor:
+      type: object
+      additionalProperties: false
+      required:
+        - sponsorMemberId
+        - relationship
+      properties:
+        sponsorMemberId:
+          type: integer
+          format: int32
+          minimum: 1
+        relationship:
+          type: string
+          description: Nature de la relation avec le candidat.
 
     MemberTransfer:
       type: object
@@ -1171,5 +1194,65 @@ components:
           type: integer
           format: int32
         unpaidPotential:
+          type: integer
+          format: int32
+
+    FederationStatistics:
+      type: object
+      additionalProperties: false
+      required:
+        - from
+        - to
+        - collectivityAttendanceRates
+        - collectivityUpToDateMembersRates
+        - newMembersCountByCollectivity
+      properties:
+        from:
+          type: string
+          format: date
+        to:
+          type: string
+          format: date
+        collectivityAttendanceRates:
+          type: array
+          description: Taux d'assiduité global par collectivité sur la période.
+          items:
+            $ref: '#/components/schemas/CollectivityRate'
+        collectivityUpToDateMembersRates:
+          type: array
+          description: Pourcentage de membres à jour de cotisation par collectivité sur la période.
+          items:
+            $ref: '#/components/schemas/CollectivityRate'
+        newMembersCountByCollectivity:
+          type: array
+          description: Nombre de nouveaux adhérents par collectivité sur la période.
+          items:
+            $ref: '#/components/schemas/CollectivityCount'
+
+    CollectivityRate:
+      type: object
+      additionalProperties: false
+      required:
+        - collectivityId
+        - value
+      properties:
+        collectivityId:
+          type: integer
+          format: int32
+        value:
+          type: number
+          format: double
+
+    CollectivityCount:
+      type: object
+      additionalProperties: false
+      required:
+        - collectivityId
+        - value
+      properties:
+        collectivityId:
+          type: integer
+          format: int32
+        value:
           type: integer
           format: int32
