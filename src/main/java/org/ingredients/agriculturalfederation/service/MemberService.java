@@ -20,10 +20,6 @@ public class MemberService {
         for (CreateMember m : request) {
             validateMemberCreation(m);
 
-            if (m.getCollectivityIdentifier() == null || m.getCollectivityIdentifier().isBlank()) {
-                throw new RuntimeException("Either collectivity or member not found.");
-            }
-
             Member created = new Member();
             created.setId("generated");
             created.setFirstName(m.getFirstName());
@@ -47,17 +43,27 @@ public class MemberService {
             throw new RuntimeException("Request body is required");
         }
 
+        if (m.getCollectivityIdentifier() == null || m.getCollectivityIdentifier().isBlank()) {
+            throw new RuntimeException("Either collectivity or member not found.");
+        }
+
         if (m.getRegistrationFeePaid() == null || !m.getRegistrationFeePaid() ||
                 m.getMembershipDuesPaid() == null || !m.getMembershipDuesPaid()) {
             throw new RuntimeException("Membership dues not paid or registration fee not paid.");
         }
 
         List<String> referees = m.getReferees();
-        if (referees != null) {
-            HashSet<String> distinct = new HashSet<>(referees);
-            if (distinct.size() != referees.size()) {
+        if (referees == null || referees.size() < 2) {
+            throw new RuntimeException("Member with bad referees or without proper payment.");
+        }
+        for (String ref : referees) {
+            if (ref == null || ref.isBlank()) {
                 throw new RuntimeException("Member with bad referees or without proper payment.");
             }
+        }
+        HashSet<String> distinct = new HashSet<>(referees);
+        if (distinct.size() != referees.size()) {
+            throw new RuntimeException("Member with bad referees or without proper payment.");
         }
     }
 }

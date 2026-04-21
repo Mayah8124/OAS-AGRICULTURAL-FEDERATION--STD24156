@@ -21,10 +21,18 @@ public class CollectivityService {
         List<Collectivity> out = new ArrayList<>();
         for (CreateCollectivity c : request) {
             validateCollectivityCreation(c);
+
             for (String memberId : c.getMembers()) {
                 if (memberId == null || memberId.isBlank()) {
                     throw new RuntimeException("Member not found.");
                 }
+            }
+
+            if (c.getStructure().getPresident() == null || c.getStructure().getPresident().isBlank() ||
+                    c.getStructure().getVicePresident() == null || c.getStructure().getVicePresident().isBlank() ||
+                    c.getStructure().getTreasurer() == null || c.getStructure().getTreasurer().isBlank() ||
+                    c.getStructure().getSecretary() == null || c.getStructure().getSecretary().isBlank()) {
+                throw new RuntimeException("Collectivity without federation approval or structure missing.");
             }
 
             CollectivityStructure structure = new CollectivityStructure(
@@ -49,19 +57,38 @@ public class CollectivityService {
         if (c == null) {
             throw new RuntimeException("Request body is required");
         }
+        if (c.getLocation() == null || c.getLocation().isBlank()) {
+            throw new RuntimeException("Location is required");
+        }
         if (c.getFederationApproval() == null || !c.getFederationApproval() || c.getStructure() == null) {
             throw new RuntimeException("Collectivity without federation approval or structure missing.");
         }
         if (c.getMembers() == null || c.getMembers().isEmpty()) {
             throw new RuntimeException("Members list is required");
         }
+        if (c.getMembers().size() < 10) {
+            throw new RuntimeException("At least 10 members are required");
+        }
         if (c.getStructure().getPresident() == null || c.getStructure().getVicePresident() == null ||
                 c.getStructure().getTreasurer() == null || c.getStructure().getSecretary() == null) {
             throw new RuntimeException("Collectivity without federation approval or structure missing.");
         }
+
+        for (String memberId : c.getMembers()) {
+            if (memberId == null || memberId.isBlank()) {
+                throw new RuntimeException("Members list is required");
+            }
+        }
         HashSet<String> ids = new HashSet<>(c.getMembers());
         if (ids.size() != c.getMembers().size()) {
             throw new RuntimeException("Duplicate member identifiers in members list");
+        }
+
+        if (!ids.contains(c.getStructure().getPresident()) ||
+                !ids.contains(c.getStructure().getVicePresident()) ||
+                !ids.contains(c.getStructure().getTreasurer()) ||
+                !ids.contains(c.getStructure().getSecretary())) {
+            throw new RuntimeException("Structure roles must be included in members list");
         }
     }
 }
