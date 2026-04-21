@@ -28,7 +28,6 @@ public class CollectivityService {
                 }
             }
 
-            // Structure role ids must also be resolvable.
             if (c.getStructure().getPresident() == null || c.getStructure().getPresident().isBlank() ||
                     c.getStructure().getVicePresident() == null || c.getStructure().getVicePresident().isBlank() ||
                     c.getStructure().getTreasurer() == null || c.getStructure().getTreasurer().isBlank() ||
