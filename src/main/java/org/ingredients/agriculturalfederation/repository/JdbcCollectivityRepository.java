@@ -52,28 +52,33 @@ public class JdbcCollectivityRepository implements CollectivityRepository {
             conn.commit();
         } catch (SQLException e) {
             if (conn != null) {
-                try { conn.rollback(); } catch (SQLException ex) { /* ignored */ }
+                try {
+                    conn.rollback();
+                } catch (SQLException ex) {
+                }
             }
             throw new RuntimeException("Error saving collectivity and structure", e);
         } finally {
-            dataSourceConfig.closeConnection(conn);
+            if (conn != null) {
+                dataSourceConfig.closeConnection(conn);
+            }
         }
     }
 
     @Override
     public Optional<Collectivity> findById(String id) {
         String sql = "SELECT c.id, c.location, cs.president_member_id, cs.vice_president_member_id, cs.treasurer_member_id, cs.secretary_member_id " +
-                     "FROM collectivity c " +
-                     "JOIN collectivity_structure cs ON c.id = cs.collectivity_id " +
-                     "WHERE c.id = ?";
-        
+                "FROM collectivity c " +
+                "JOIN collectivity_structure cs ON c.id = cs.collectivity_id " +
+                "WHERE c.id = ?";
+
         Connection conn = null;
         try {
             conn = dataSourceConfig.getConnection();
             PreparedStatement stmt = conn.prepareStatement(sql);
             stmt.setObject(1, UUID.fromString(id));
             ResultSet rs = stmt.executeQuery();
-            
+
             if (rs.next()) {
                 Collectivity collectivity = new Collectivity();
                 collectivity.setId(rs.getObject("id").toString());
@@ -85,7 +90,6 @@ public class JdbcCollectivityRepository implements CollectivityRepository {
                 Member secretary = memberRepository.findById(rs.getObject("secretary_member_id").toString()).orElse(null);
 
                 collectivity.setStructure(new CollectivityStructure(president, vicePresident, treasurer, secretary));
-
                 collectivity.setMembers(findMembersByCollectivityId(id));
 
                 return Optional.of(collectivity);

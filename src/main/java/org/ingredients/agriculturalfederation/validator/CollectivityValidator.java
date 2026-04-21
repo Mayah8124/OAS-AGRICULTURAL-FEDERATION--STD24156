@@ -30,6 +30,7 @@ public class CollectivityValidator {
         validateBasicInformation(createCollectivity);
         validateStructure(createCollectivity.getStructure());
         validateMembers(createCollectivity.getMembers());
+        validateStructureMembersArePartOfMembers(createCollectivity.getStructure(), createCollectivity.getMembers());
     }
 
     private void validateBasicInformation(CreateCollectivity createCollectivity) {
@@ -105,6 +106,10 @@ public class CollectivityValidator {
             throw new InvalidCollectivityException("At least one member is required");
         }
 
+        if (members.size() < 10) {
+            throw new InvalidCollectivityException("A collectivity must have at least 10 members");
+        }
+
         for (String memberId : members) {
             if (memberId == null || memberId.trim().isEmpty()) {
                 throw new InvalidCollectivityException("Member ID cannot be null or empty");
@@ -113,6 +118,19 @@ public class CollectivityValidator {
             if (!memberExists(memberId)) {
                 throw new MemberNotFoundException("Member with ID " + memberId + " not found");
             }
+        }
+    }
+
+    private void validateStructureMembersArePartOfMembers(CreateCollectivityStructure structure, List<String> members) {
+        if (structure == null || members == null) {
+            return;
+        }
+
+        if (!members.contains(structure.getPresident())
+                || !members.contains(structure.getVicePresident())
+                || !members.contains(structure.getTreasurer())
+                || !members.contains(structure.getSecretary())) {
+            throw new InvalidCollectivityException("Structure members must be part of the collectivity members list");
         }
     }
 

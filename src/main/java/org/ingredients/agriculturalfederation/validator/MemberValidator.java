@@ -10,7 +10,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.HashSet;
 
 @Component
 public class MemberValidator {
@@ -84,6 +86,15 @@ public class MemberValidator {
         List<String> referees = createMember.getReferees();
         if (referees == null || referees.isEmpty()) {
             throw new InvalidMemberException("At least one referee is required");
+        }
+
+        if (referees.size() != 2) {
+            throw new InvalidMemberException("Exactly 2 referees are required");
+        }
+
+        Set<String> uniqueReferees = new HashSet<>(referees);
+        if (uniqueReferees.size() != 2) {
+            throw new InvalidMemberException("Referees must be different members");
         }
 
         for (String refereeId : referees) {
