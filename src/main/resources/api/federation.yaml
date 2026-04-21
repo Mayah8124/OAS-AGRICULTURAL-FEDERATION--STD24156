@@ -1,1 +1,6 @@
 openapi: 3.1.0
+info:
+  title: Federation of agricultural communities
+  version: 1.0.0
+servers:
+  - url: 'http://localhost:8080'
