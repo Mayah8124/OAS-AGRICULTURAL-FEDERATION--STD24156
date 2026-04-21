@@ -56,7 +56,7 @@ public class MemberValidator {
             throw new InvalidMemberException("Profession is required");
         }
 
-        if (createMember.getPhoneNumber() == null) {
+        if (createMember.getPhoneNumber() == null || createMember.getPhoneNumber().trim().isEmpty()) {
             throw new InvalidMemberException("Phone number is required");
         }
 
@@ -103,7 +103,7 @@ public class MemberValidator {
     }
 
     private boolean memberExists(String memberId) {
-        String sql = "SELECT COUNT(*) FROM members WHERE id = ?";
+        String sql = "SELECT COUNT(*) FROM member WHERE id = ?";
         Connection connection = null;
         
         try {
@@ -126,7 +126,7 @@ public class MemberValidator {
     }
 
     private boolean collectivityExists(String collectivityId) {
-        String sql = "SELECT COUNT(*) FROM collectivities WHERE id = ?";
+        String sql = "SELECT COUNT(*) FROM collectivity WHERE id = ?";
         Connection connection = null;
         
         try {

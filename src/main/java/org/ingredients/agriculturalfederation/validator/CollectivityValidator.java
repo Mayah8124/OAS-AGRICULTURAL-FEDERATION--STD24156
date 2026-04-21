@@ -116,7 +116,7 @@ public class CollectivityValidator {
     }
 
     private boolean memberExists(String memberId) {
-        String sql = "SELECT COUNT(*) FROM members WHERE id = ?";
+        String sql = "SELECT COUNT(*) FROM member WHERE id = ?";
         Connection connection = null;
         
         try {
