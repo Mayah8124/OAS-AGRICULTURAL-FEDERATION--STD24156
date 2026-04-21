@@ -19,7 +19,7 @@ paths:
     post:
       tags:
         - Collectivités
-      summary: Ouvrir une nouvelle collectivité
+      summary: Open a new collectivity
       description: Création d'une nouvelle collectivité agricole.
       requestBody:
         required: true
@@ -45,7 +45,7 @@ paths:
     get:
       tags:
         - Collectivités
-      summary: Récupérer une collectivité
+      summary: Get a collectivity
       parameters:
         - $ref: '#/components/parameters/CollectivityId'
       responses:
@@ -62,11 +62,47 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
+  /federation/statistics:
+    get:
+      tags:
+        - Statistiques
+      summary: Get federation statistics
+      description: |
+        Le secrétaire de la fédération consolide les statistiques mensuelles et annuelles provenant des collectivités.
+      parameters:
+        - name: from
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FederationStatistics'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
   /collectivities/{collectivityId}/members:
     post:
       tags:
         - Membres
-      summary: Admettre un nouveau membre dans une collectivité
+      summary: Submit a membership application
+      description: |
+        Permet à un candidat de déposer une demande d'adhésion au sein d'une collectivité.
       parameters:
         - $ref: '#/components/parameters/CollectivityId'
       requestBody:
@@ -98,7 +134,7 @@ paths:
     get:
       tags:
         - Membres
-      summary: Lister les membres d'une collectivité
+      summary: List collectivity members
       parameters:
         - $ref: '#/components/parameters/CollectivityId'
         - name: status
@@ -126,7 +162,7 @@ paths:
     post:
       tags:
         - Membres
-      summary: Changer de collectivité
+      summary: Transfer a member to another collectivity
       description: Transférer un membre vers une autre collectivité.
       parameters:
         - $ref: '#/components/parameters/MemberId'
@@ -160,7 +196,7 @@ paths:
     patch:
       tags:
         - Membres
-      summary: Mettre à jour l'état d'un membre (démission)
+      summary: Update a member status (resignation)
       parameters:
         - $ref: '#/components/parameters/MemberId'
       requestBody:
@@ -193,7 +229,7 @@ paths:
     post:
       tags:
         - Cotisations
-      summary: Enregistrer un encaissement (cotisation/paiement)
+      summary: Record a contribution payment
       description: Enregistre un paiement (mensuel, annuel ou ponctuel) effectué par un membre.
       parameters:
         - $ref: '#/components/parameters/CollectivityId'
@@ -226,7 +262,7 @@ paths:
     get:
       tags:
         - Cotisations
-      summary: Lister les encaissements d'une collectivité
+      summary: List collectivity contribution payments
       parameters:
         - $ref: '#/components/parameters/CollectivityId'
         - name: from
@@ -261,7 +297,7 @@ paths:
     post:
       tags:
         - Comptes
-      summary: Créer un compte de trésorerie
+      summary: Create a treasury account
       parameters:
         - $ref: '#/components/parameters/CollectivityId'
       requestBody:
@@ -293,7 +329,7 @@ paths:
     get:
       tags:
         - Comptes
-      summary: Lister les comptes de trésorerie d'une collectivité
+      summary: List collectivity treasury accounts
       parameters:
         - $ref: '#/components/parameters/CollectivityId'
       responses:
@@ -316,7 +352,7 @@ paths:
     get:
       tags:
         - Comptes
-      summary: Situation de trésorerie à une date donnée
+      summary: Get a treasury snapshot
       parameters:
         - $ref: '#/components/parameters/CollectivityId'
         - name: at
@@ -343,7 +379,7 @@ paths:
     get:
       tags:
         - Activités
-      summary: Lister les activités d'une collectivité
+      summary: List collectivity activities
       parameters:
         - $ref: '#/components/parameters/CollectivityId'
         - name: from
@@ -377,7 +413,7 @@ paths:
     post:
       tags:
         - Activités
-      summary: Planifier une activité exceptionnelle
+      summary: Schedule an exceptional activity
       parameters:
         - $ref: '#/components/parameters/CollectivityId'
       requestBody:
@@ -410,7 +446,7 @@ paths:
     get:
       tags:
         - Activités
-      summary: Récupérer les activités obligatoires
+      summary: List mandatory activities
       parameters:
         - $ref: '#/components/parameters/CollectivityId'
         - name: year
@@ -439,7 +475,7 @@ paths:
     post:
       tags:
         - Présences
-      summary: Ouvrir une session de présence pour une activité
+      summary: Open an attendance session
       parameters:
         - $ref: '#/components/parameters/CollectivityId'
       requestBody:
@@ -472,7 +508,7 @@ paths:
     post:
       tags:
         - Présences
-      summary: Marquer la présence d'un membre
+      summary: Record member attendance
       parameters:
         - $ref: '#/components/parameters/AttendanceSessionId'
       requestBody:
@@ -505,7 +541,7 @@ paths:
     get:
       tags:
         - Statistiques
-      summary: Statistiques globales d'une collectivité
+      summary: Get collectivity statistics
       parameters:
         - $ref: '#/components/parameters/CollectivityId'
         - name: from
@@ -538,7 +574,7 @@ paths:
     get:
       tags:
         - Statistiques
-      summary: Statistiques détaillées par membre actif
+      summary: List active member statistics
       parameters:
         - $ref: '#/components/parameters/CollectivityId'
         - name: from
