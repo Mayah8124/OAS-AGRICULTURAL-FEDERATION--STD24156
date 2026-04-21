@@ -1,13 +1,14 @@
 package org.ingredients.agriculturalfederation.entity;
 
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDate;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@SuperBuilder
 @EqualsAndHashCode
 public class MemberInformation {
     private String firstName;

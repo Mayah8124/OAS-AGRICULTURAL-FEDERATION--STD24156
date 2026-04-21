@@ -2,19 +2,24 @@ package org.ingredients.agriculturalfederation.service;
 
 import org.ingredients.agriculturalfederation.entity.CreateMember;
 import org.ingredients.agriculturalfederation.entity.Member;
+import org.ingredients.agriculturalfederation.entity.MemberInformation;
+import org.ingredients.agriculturalfederation.repository.MemberRepository;
 import org.ingredients.agriculturalfederation.validator.MemberValidator;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class MemberService {
 
     private final MemberValidator memberValidator;
+    private final MemberRepository memberRepository;
 
-    public MemberService(MemberValidator memberValidator) {
+    public MemberService(MemberValidator memberValidator, MemberRepository memberRepository) {
         this.memberValidator = memberValidator;
+        this.memberRepository = memberRepository;
     }
 
     public List<Member> createMembers(List<CreateMember> request) {
@@ -26,8 +31,9 @@ public class MemberService {
         for (CreateMember m : request) {
             memberValidator.validateMember(m);
 
+            String newId = UUID.randomUUID().toString();
             Member created = new Member();
-            created.setId("generated");
+            created.setId(newId);
             created.setFirstName(m.getFirstName());
             created.setLastName(m.getLastName());
             created.setBirthDate(m.getBirthDate());
@@ -37,7 +43,20 @@ public class MemberService {
             created.setPhoneNumber(m.getPhoneNumber());
             created.setEmail(m.getEmail());
             created.setOccupation(m.getOccupation());
-            created.setReferees(List.of());
+            created.setReferees(new ArrayList<>());
+            
+            memberRepository.save(created);
+
+            if (m.getCollectivityIdentifier() != null && !m.getCollectivityIdentifier().isBlank()) {
+                memberRepository.updateCollectivityId(newId, m.getCollectivityIdentifier());
+            }
+            
+            if (m.getReferees() != null && !m.getReferees().isEmpty()) {
+                memberRepository.saveReferees(newId, m.getReferees());
+            }
+
+            created.setReferees(memberRepository.findAllById(m.getReferees()));
+
             out.add(created);
         }
 

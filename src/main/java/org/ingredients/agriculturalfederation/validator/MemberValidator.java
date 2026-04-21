@@ -10,6 +10,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.UUID;
 
 @Component
 public class MemberValidator {
@@ -109,7 +110,7 @@ public class MemberValidator {
         try {
             connection = dataSourceConfig.getConnection();
             PreparedStatement statement = connection.prepareStatement(sql);
-            statement.setString(1, memberId);
+            statement.setObject(1, UUID.fromString(memberId));
             ResultSet resultSet = statement.executeQuery();
             
             if (resultSet.next()) {
@@ -132,7 +133,7 @@ public class MemberValidator {
         try {
             connection = dataSourceConfig.getConnection();
             PreparedStatement statement = connection.prepareStatement(sql);
-            statement.setString(1, collectivityId);
+            statement.setObject(1, UUID.fromString(collectivityId));
             ResultSet resultSet = statement.executeQuery();
             
             if (resultSet.next()) {
