@@ -61,6 +61,45 @@ paths:
             - Membership dues not paid or registration fee not paid.
         404:
           description: Either collectivity or member not found.
+  '/collectivity/{collectivityId}/collectivity-assignement':
+    post:
+      summary: Assign unique identifier to collectivity
+      description: |
+        Allows the federation to assign a unique number and name to a specific collectivity
+      parameters:
+        - name: collectivityId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID of the collectivity to assign identifiers to
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CollectivityIdentifierAssignment'
+      responses:
+        200:
+          description: Identifier assigned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Collectivity'
+        400:
+          description: invalid identifier format or missing required fields
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: 'invalid identifier format or missing required fields'
+        409:
+          description: name or number already exists
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: 'Name or number already exists'
 components:
   schemas:
     CreateCollectivity:
@@ -104,6 +143,12 @@ components:
       properties:
         id:
           type: string
+        number:
+          type: integer
+          description: Unique number
+        name:
+          type: string
+          description: Unique name
         location:
           type: string
         structure:
@@ -176,3 +221,20 @@ components:
         - TREASURER
         - VICE_PRESIDENT
         - PRESIDENT
+    CollectivityIdentifierAssignment:
+      type: object
+      required:
+        - number
+        - name
+      properties:
+        number:
+          type: integer
+          description: unique number assigned by federation
+          minimum: 1
+          example: 1
+        name:
+          type: string
+          description: unique name assigned by federation
+          minLength: 3
+          maxLength: 100
+          example: 'Northern Agricultural Collectivity'
