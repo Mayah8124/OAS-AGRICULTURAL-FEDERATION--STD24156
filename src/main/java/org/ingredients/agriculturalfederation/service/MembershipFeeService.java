@@ -55,6 +55,4 @@ public class MembershipFeeService {
                 .status(membershipFee.getStatus().name())
                 .build();
     }
-
-    }
 }

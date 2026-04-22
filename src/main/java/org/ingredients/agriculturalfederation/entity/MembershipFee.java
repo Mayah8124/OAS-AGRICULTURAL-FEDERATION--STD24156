@@ -6,9 +6,13 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@EqualsAndHashCode(callSuper = true)
-public class MembershipFee extends CreateMemberShipFee {
+@EqualsAndHashCode
+public class MembershipFee {
     private String id;
+    private java.time.LocalDate eligibleFrom;
+    private Frequency frequency;
+    private java.math.BigDecimal amount;
+    private String label;
     private ActivityStatus status;
     private String collectivityId;
 }
