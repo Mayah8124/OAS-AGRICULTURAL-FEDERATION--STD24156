@@ -1,7 +1,6 @@
 package org.ingredients.agriculturalfederation.entity;
 
 import lombok.*;
-import org.ingredients.agriculturalfederation.entity.account.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -16,6 +15,6 @@ public class CollectivityTransaction {
     private LocalDate creationDate;
     private BigDecimal amount;
     private PaymentMode paymentMode;
-    private Object accountCredited;
+    private FinancialAccount accountCredited;
     private Member memberDebited;
 }
