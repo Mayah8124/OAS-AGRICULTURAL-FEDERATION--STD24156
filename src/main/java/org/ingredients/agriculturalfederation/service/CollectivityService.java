@@ -58,7 +58,7 @@ public class CollectivityService {
 
             List<Member> members = memberRepository.findAllById(c.getMembers());
 
-            Collectivity collectivity = new Collectivity(collectivityId, c.getLocation(), structure, members);
+            Collectivity collectivity = new Collectivity(collectivityId, c.getLocation(), null, null, structure, members);
             
             collectivityRepository.save(collectivity, c.getFederationApproval());
             collectivityRepository.linkMembers(collectivityId, c.getMembers());
