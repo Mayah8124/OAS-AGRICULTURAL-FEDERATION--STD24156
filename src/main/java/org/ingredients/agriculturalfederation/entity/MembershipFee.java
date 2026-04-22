@@ -1,19 +1,14 @@
 package org.ingredients.agriculturalfederation.entity;
 
 import lombok.*;
-import java.math.BigDecimal;
-import java.time.LocalDate;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@EqualsAndHashCode
-public class MembershipFee {
+@EqualsAndHashCode(callSuper = true)
+public class MembershipFee extends CreateMemberShipFee {
     private String id;
-    private LocalDate eligibleFrom;
-    private Frequency frequency;
-    private BigDecimal amount;
-    private String label;
     private ActivityStatus status;
+    private String collectivityId;
 }
