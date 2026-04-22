@@ -26,6 +26,13 @@ public class ApiExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
     }
 
+    @ExceptionHandler({CollectivityIdentityAlreadyAssignedException.class, CollectivityIdentityConflictException.class})
+    public ResponseEntity<Map<String, String>> handleConflict(RuntimeException e) {
+        Map<String, String> error = new HashMap<>();
+        error.put("message", e.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
     @ExceptionHandler(ValidationException.class)
     public ResponseEntity<Map<String, String>> handleTechnicalError(ValidationException e) {
         Map<String, String> error = new HashMap<>();

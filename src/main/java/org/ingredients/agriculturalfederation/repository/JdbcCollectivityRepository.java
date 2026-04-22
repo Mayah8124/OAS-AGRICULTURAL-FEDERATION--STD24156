@@ -4,6 +4,9 @@ import org.ingredients.agriculturalfederation.config.DataSourceConfig;
 import org.ingredients.agriculturalfederation.entity.Collectivity;
 import org.ingredients.agriculturalfederation.entity.CollectivityStructure;
 import org.ingredients.agriculturalfederation.entity.Member;
+import org.ingredients.agriculturalfederation.validator.exception.CollectivityIdentityAlreadyAssignedException;
+import org.ingredients.agriculturalfederation.validator.exception.CollectivityIdentityConflictException;
+import org.ingredients.agriculturalfederation.validator.exception.CollectivityNotFoundException;
 import org.springframework.stereotype.Repository;
 
 import java.sql.*;
@@ -67,7 +70,7 @@ public class JdbcCollectivityRepository implements CollectivityRepository {
 
     @Override
     public Optional<Collectivity> findById(String id) {
-        String sql = "SELECT c.id, c.location, cs.president_member_id, cs.vice_president_member_id, cs.treasurer_member_id, cs.secretary_member_id " +
+        String sql = "SELECT c.id, c.location, c.name, c.number, cs.president_member_id, cs.vice_president_member_id, cs.treasurer_member_id, cs.secretary_member_id " +
                 "FROM collectivity c " +
                 "JOIN collectivity_structure cs ON c.id = cs.collectivity_id " +
                 "WHERE c.id = ?";
@@ -83,6 +86,9 @@ public class JdbcCollectivityRepository implements CollectivityRepository {
                 Collectivity collectivity = new Collectivity();
                 collectivity.setId(rs.getObject("id").toString());
                 collectivity.setLocation(rs.getString("location"));
+                collectivity.setName(rs.getString("name"));
+                Object numberObj = rs.getObject("number");
+                collectivity.setNumber(numberObj == null ? null : ((Number) numberObj).intValue());
 
                 Member president = memberRepository.findById(rs.getObject("president_member_id").toString()).orElse(null);
                 Member vicePresident = memberRepository.findById(rs.getObject("vice_president_member_id").toString()).orElse(null);
@@ -100,6 +106,49 @@ public class JdbcCollectivityRepository implements CollectivityRepository {
             dataSourceConfig.closeConnection(conn);
         }
         return Optional.empty();
+    }
+
+    @Override
+    public void assignIdentity(String collectivityId, String name, Integer number) {
+        String sqlSelect = "SELECT name, number FROM collectivity WHERE id = ?";
+        String sqlUpdate = "UPDATE collectivity SET name = ?, number = ? WHERE id = ?";
+
+        Connection conn = null;
+        try {
+            conn = dataSourceConfig.getConnection();
+
+            try (PreparedStatement stmtSelect = conn.prepareStatement(sqlSelect)) {
+                stmtSelect.setObject(1, UUID.fromString(collectivityId));
+                ResultSet rs = stmtSelect.executeQuery();
+                if (!rs.next()) {
+                    throw new CollectivityNotFoundException("Collectivity with ID " + collectivityId + " not found");
+                }
+
+                String currentName = rs.getString("name");
+                Object currentNumber = rs.getObject("number");
+                if (currentName != null || currentNumber != null) {
+                    throw new CollectivityIdentityAlreadyAssignedException("Collectivity identity is already assigned");
+                }
+            }
+
+            try (PreparedStatement stmtUpdate = conn.prepareStatement(sqlUpdate)) {
+                stmtUpdate.setString(1, name);
+                if (number == null) {
+                    stmtUpdate.setNull(2, Types.INTEGER);
+                } else {
+                    stmtUpdate.setInt(2, number);
+                }
+                stmtUpdate.setObject(3, UUID.fromString(collectivityId));
+                stmtUpdate.executeUpdate();
+            }
+        } catch (SQLException e) {
+            if ("23505".equals(e.getSQLState())) {
+                throw new CollectivityIdentityConflictException("Collectivity name or number already exists");
+            }
+            throw new RuntimeException("Error assigning collectivity identity", e);
+        } finally {
+            dataSourceConfig.closeConnection(conn);
+        }
     }
 
     @Override

@@ -2,14 +2,13 @@ package org.ingredients.agriculturalfederation.service;
 
 import org.ingredients.agriculturalfederation.entity.Collectivity;
 import org.ingredients.agriculturalfederation.entity.CollectivityStructure;
-import org.ingredients.agriculturalfederation.entity.CreateCollectivity;
-import org.ingredients.agriculturalfederation.entity.Member;
-import org.ingredients.agriculturalfederation.entity.CollectivityStructure;
+import org.ingredients.agriculturalfederation.entity.AssignCollectivityIdentity;
 import org.ingredients.agriculturalfederation.entity.CreateCollectivity;
 import org.ingredients.agriculturalfederation.entity.Member;
 import org.ingredients.agriculturalfederation.repository.CollectivityRepository;
 import org.ingredients.agriculturalfederation.repository.MemberRepository;
 import org.ingredients.agriculturalfederation.validator.CollectivityValidator;
+import org.ingredients.agriculturalfederation.validator.CollectivityIdentityValidator;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -20,13 +19,16 @@ import java.util.UUID;
 public class CollectivityService {
 
     private final CollectivityValidator collectivityValidator;
+    private final CollectivityIdentityValidator collectivityIdentityValidator;
     private final CollectivityRepository collectivityRepository;
     private final MemberRepository memberRepository;
 
     public CollectivityService(CollectivityValidator collectivityValidator, 
+                               CollectivityIdentityValidator collectivityIdentityValidator,
                                CollectivityRepository collectivityRepository,
                                MemberRepository memberRepository) {
         this.collectivityValidator = collectivityValidator;
+        this.collectivityIdentityValidator = collectivityIdentityValidator;
         this.collectivityRepository = collectivityRepository;
         this.memberRepository = memberRepository;
     }
@@ -65,5 +67,11 @@ public class CollectivityService {
         }
 
         return out;
+    }
+
+    public Collectivity assignIdentity(String collectivityId, AssignCollectivityIdentity request) {
+        collectivityIdentityValidator.validate(collectivityId, request);
+        collectivityRepository.assignIdentity(collectivityId, request.getName(), request.getNumber());
+        return collectivityRepository.findById(collectivityId).orElseThrow();
     }
 }

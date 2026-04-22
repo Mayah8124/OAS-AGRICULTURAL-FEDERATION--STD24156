@@ -1,7 +1,9 @@
 create table if not exists collectivity (
     id uuid primary key,
     location text not null,
-    federation_approval boolean not null
+    federation_approval boolean not null,
+    name text unique,
+    number integer unique
 );
 
 create table if not exists member (
