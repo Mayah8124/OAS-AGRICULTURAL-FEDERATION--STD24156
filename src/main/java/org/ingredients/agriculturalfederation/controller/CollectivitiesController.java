@@ -3,14 +3,12 @@ package org.ingredients.agriculturalfederation.controller;
 import org.ingredients.agriculturalfederation.dto.request.CollectivityInformationRequest;
 import org.ingredients.agriculturalfederation.dto.request.CreateCollectivityRequest;
 import org.ingredients.agriculturalfederation.entity.Collectivity;
+import org.ingredients.agriculturalfederation.entity.MembershipFee;
 import org.ingredients.agriculturalfederation.service.CollectivityService;
+import org.ingredients.agriculturalfederation.service.MembershipFeeService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -18,9 +16,11 @@ import java.util.List;
 public class CollectivitiesController {
 
     private final CollectivityService collectivityService;
+    private final MembershipFeeService membershipFeeService;
 
-    public CollectivitiesController(CollectivityService collectivityService) {
+    public CollectivitiesController(CollectivityService collectivityService, MembershipFeeService membershipFeeService) {
         this.collectivityService = collectivityService;
+        this.membershipFeeService = membershipFeeService;
     }
 
     @PostMapping("/collectivities")
@@ -34,5 +34,10 @@ public class CollectivitiesController {
             @RequestBody CollectivityInformationRequest request
     ) {
         return ResponseEntity.status(HttpStatus.OK).body(collectivityService.updateInformations(id, request));
+    }
+
+    @GetMapping("/collectivities/{id}/membershipFees")
+    public ResponseEntity<List<MembershipFee>> getMembershipFees(@PathVariable String id) {
+        return ResponseEntity.status(HttpStatus.OK).body(membershipFeeService.getMembershipFees(id));
     }
 }
