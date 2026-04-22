@@ -1,7 +1,7 @@
 package org.ingredients.agriculturalfederation.validator;
 
 import org.ingredients.agriculturalfederation.config.DataSourceConfig;
-import org.ingredients.agriculturalfederation.entity.CreateMember;
+import org.ingredients.agriculturalfederation.dto.request.CreateMemberRequest;
 import org.ingredients.agriculturalfederation.validator.exception.*;
 import org.springframework.stereotype.Component;
 
@@ -23,7 +23,7 @@ public class MemberValidator {
         this.dataSourceConfig = dataSourceConfig;
     }
 
-    public void validateMember(CreateMember createMember) {
+    public void validateMember(CreateMemberRequest createMember) {
         if (createMember == null) {
             throw new InvalidMemberException("Member cannot be null");
         }
@@ -34,7 +34,7 @@ public class MemberValidator {
         validateCollectivity(createMember.getCollectivityIdentifier());
     }
 
-    private void validateBasicInformation(CreateMember createMember) {
+    private void validateBasicInformation(CreateMemberRequest createMember) {
         if (createMember.getFirstName() == null || createMember.getFirstName().trim().isEmpty()) {
             throw new InvalidMemberException("First name is required");
         }
@@ -72,7 +72,7 @@ public class MemberValidator {
         }
     }
 
-    private void validatePaymentStatus(CreateMember createMember) {
+    private void validatePaymentStatus(CreateMemberRequest createMember) {
         if (createMember.getRegistrationFeePaid() == null || !createMember.getRegistrationFeePaid()) {
             throw new InvalidMemberException("Registration fee must be paid");
         }
@@ -82,7 +82,7 @@ public class MemberValidator {
         }
     }
 
-    private void validateReferees(CreateMember createMember) {
+    private void validateReferees(CreateMemberRequest createMember) {
         List<String> referees = createMember.getReferees();
         if (referees == null || referees.isEmpty()) {
             throw new InvalidMemberException("At least one referee is required");

@@ -1,8 +1,7 @@
 package org.ingredients.agriculturalfederation.service;
 
-import org.ingredients.agriculturalfederation.entity.CreateMember;
+import org.ingredients.agriculturalfederation.dto.request.CreateMemberRequest;
 import org.ingredients.agriculturalfederation.entity.Member;
-import org.ingredients.agriculturalfederation.entity.MemberInformation;
 import org.ingredients.agriculturalfederation.repository.MemberRepository;
 import org.ingredients.agriculturalfederation.validator.MemberValidator;
 import org.springframework.stereotype.Service;
@@ -22,13 +21,13 @@ public class MemberService {
         this.memberRepository = memberRepository;
     }
 
-    public List<Member> createMembers(List<CreateMember> request) {
+    public List<Member> createMembers(List<CreateMemberRequest> request) {
         if (request == null) {
             return List.of();
         }
 
         List<Member> out = new ArrayList<>();
-        for (CreateMember m : request) {
+        for (CreateMemberRequest m : request) {
             memberValidator.validateMember(m);
 
             String newId = UUID.randomUUID().toString();

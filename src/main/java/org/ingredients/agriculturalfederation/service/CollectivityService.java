@@ -1,9 +1,10 @@
 package org.ingredients.agriculturalfederation.service;
 
+import org.ingredients.agriculturalfederation.dto.request.CollectivityInformationRequest;
+import org.ingredients.agriculturalfederation.dto.request.CreateCollectivityRequest;
+import org.ingredients.agriculturalfederation.dto.request.CreateCollectivityStructureRequest;
 import org.ingredients.agriculturalfederation.entity.Collectivity;
 import org.ingredients.agriculturalfederation.entity.CollectivityStructure;
-import org.ingredients.agriculturalfederation.entity.AssignCollectivityIdentity;
-import org.ingredients.agriculturalfederation.entity.CreateCollectivity;
 import org.ingredients.agriculturalfederation.entity.Member;
 import org.ingredients.agriculturalfederation.repository.CollectivityRepository;
 import org.ingredients.agriculturalfederation.repository.MemberRepository;
@@ -33,21 +34,22 @@ public class CollectivityService {
         this.memberRepository = memberRepository;
     }
 
-    public List<Collectivity> createCollectivities(List<CreateCollectivity> request) {
+    public List<Collectivity> createCollectivities(List<CreateCollectivityRequest> request) {
         if (request == null) {
             return List.of();
         }
 
         List<Collectivity> out = new ArrayList<>();
-        for (CreateCollectivity c : request) {
+        for (CreateCollectivityRequest c : request) {
             collectivityValidator.validateCollectivity(c);
 
             String collectivityId = UUID.randomUUID().toString();
             
-            Member president = memberRepository.findById(c.getStructure().getPresident()).orElseThrow();
-            Member vicePresident = memberRepository.findById(c.getStructure().getVicePresident()).orElseThrow();
-            Member treasurer = memberRepository.findById(c.getStructure().getTreasurer()).orElseThrow();
-            Member secretary = memberRepository.findById(c.getStructure().getSecretary()).orElseThrow();
+            CreateCollectivityStructureRequest s = c.getStructure();
+            Member president = memberRepository.findById(s.getPresident()).orElseThrow();
+            Member vicePresident = memberRepository.findById(s.getVicePresident()).orElseThrow();
+            Member treasurer = memberRepository.findById(s.getTreasurer()).orElseThrow();
+            Member secretary = memberRepository.findById(s.getSecretary()).orElseThrow();
 
             CollectivityStructure structure = new CollectivityStructure(
                     president,
@@ -69,7 +71,7 @@ public class CollectivityService {
         return out;
     }
 
-    public Collectivity assignIdentity(String collectivityId, AssignCollectivityIdentity request) {
+    public Collectivity updateInformations(String collectivityId, CollectivityInformationRequest request) {
         collectivityIdentityValidator.validate(collectivityId, request);
         collectivityRepository.assignIdentity(collectivityId, request.getName(), request.getNumber());
         return collectivityRepository.findById(collectivityId).orElseThrow();

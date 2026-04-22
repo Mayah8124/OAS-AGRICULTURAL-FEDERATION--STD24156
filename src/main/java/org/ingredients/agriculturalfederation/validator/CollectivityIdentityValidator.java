@@ -1,7 +1,7 @@
 package org.ingredients.agriculturalfederation.validator;
 
 import org.ingredients.agriculturalfederation.config.DataSourceConfig;
-import org.ingredients.agriculturalfederation.entity.AssignCollectivityIdentity;
+import org.ingredients.agriculturalfederation.dto.request.CollectivityInformationRequest;
 import org.ingredients.agriculturalfederation.validator.exception.CollectivityNotFoundException;
 import org.ingredients.agriculturalfederation.validator.exception.InvalidCollectivityException;
 import org.ingredients.agriculturalfederation.validator.exception.ValidationException;
@@ -22,7 +22,7 @@ public class CollectivityIdentityValidator {
         this.dataSourceConfig = dataSourceConfig;
     }
 
-    public void validate(String collectivityId, AssignCollectivityIdentity request) {
+    public void validate(String collectivityId, CollectivityInformationRequest request) {
         if (collectivityId == null || collectivityId.trim().isEmpty()) {
             throw new InvalidCollectivityException("Collectivity identifier is required");
         }

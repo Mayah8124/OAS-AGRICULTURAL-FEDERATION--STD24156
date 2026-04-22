@@ -1,4 +1,4 @@
-package org.ingredients.agriculturalfederation.entity;
+package org.ingredients.agriculturalfederation.dto.request;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 @EqualsAndHashCode
-public class AssignCollectivityIdentity {
+public class CollectivityInformationRequest {
     private String name;
     private Integer number;
 }

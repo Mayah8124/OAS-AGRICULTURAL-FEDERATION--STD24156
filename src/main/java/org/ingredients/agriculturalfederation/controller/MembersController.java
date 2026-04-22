@@ -1,6 +1,6 @@
 package org.ingredients.agriculturalfederation.controller;
 
-import org.ingredients.agriculturalfederation.entity.CreateMember;
+import org.ingredients.agriculturalfederation.dto.request.CreateMemberRequest;
 import org.ingredients.agriculturalfederation.entity.Member;
 import org.ingredients.agriculturalfederation.service.MemberService;
 import org.springframework.http.HttpStatus;
@@ -21,7 +21,7 @@ public class MembersController {
     }
 
     @PostMapping("/members")
-    public ResponseEntity<List<Member>> createListOfMembers(@RequestBody List<CreateMember> request) {
+    public ResponseEntity<List<Member>> createListOfMembers(@RequestBody List<CreateMemberRequest> request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(memberService.createMembers(request));
     }
 }

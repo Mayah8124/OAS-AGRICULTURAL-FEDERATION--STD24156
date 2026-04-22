@@ -1,8 +1,8 @@
 package org.ingredients.agriculturalfederation.validator;
 
 import org.ingredients.agriculturalfederation.config.DataSourceConfig;
-import org.ingredients.agriculturalfederation.entity.CreateCollectivity;
-import org.ingredients.agriculturalfederation.entity.CreateCollectivityStructure;
+import org.ingredients.agriculturalfederation.dto.request.CreateCollectivityRequest;
+import org.ingredients.agriculturalfederation.dto.request.CreateCollectivityStructureRequest;
 import org.ingredients.agriculturalfederation.validator.exception.*;
 import org.springframework.stereotype.Component;
 
@@ -22,7 +22,7 @@ public class CollectivityValidator {
         this.dataSourceConfig = dataSourceConfig;
     }
 
-    public void validateCollectivity(CreateCollectivity createCollectivity) {
+    public void validateCollectivity(CreateCollectivityRequest createCollectivity) {
         if (createCollectivity == null) {
             throw new InvalidCollectivityException("Collectivity cannot be null");
         }
@@ -33,7 +33,7 @@ public class CollectivityValidator {
         validateStructureMembersArePartOfMembers(createCollectivity.getStructure(), createCollectivity.getMembers());
     }
 
-    private void validateBasicInformation(CreateCollectivity createCollectivity) {
+    private void validateBasicInformation(CreateCollectivityRequest createCollectivity) {
         if (createCollectivity.getLocation() == null || createCollectivity.getLocation().trim().isEmpty()) {
             throw new InvalidCollectivityException("Location is required");
         }
@@ -47,7 +47,7 @@ public class CollectivityValidator {
         }
     }
 
-    private void validateStructure(CreateCollectivityStructure structure) {
+    private void validateStructure(CreateCollectivityStructureRequest structure) {
         if (structure == null) {
             throw new InvalidCollectivityException("Structure cannot be null");
         }
@@ -70,7 +70,7 @@ public class CollectivityValidator {
         }
     }
 
-    private void validateUniqueStructureMembers(CreateCollectivityStructure structure) {
+    private void validateUniqueStructureMembers(CreateCollectivityStructureRequest structure) {
         String president = structure.getPresident();
         String vicePresident = structure.getVicePresident();
         String treasurer = structure.getTreasurer();
@@ -121,7 +121,7 @@ public class CollectivityValidator {
         }
     }
 
-    private void validateStructureMembersArePartOfMembers(CreateCollectivityStructure structure, List<String> members) {
+    private void validateStructureMembersArePartOfMembers(CreateCollectivityStructureRequest structure, List<String> members) {
         if (structure == null || members == null) {
             return;
         }
