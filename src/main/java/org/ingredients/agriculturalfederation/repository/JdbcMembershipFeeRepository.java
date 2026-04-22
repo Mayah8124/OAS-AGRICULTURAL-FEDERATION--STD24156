@@ -4,12 +4,9 @@ import org.ingredients.agriculturalfederation.config.DataSourceConfig;
 import org.ingredients.agriculturalfederation.entity.ActivityStatus;
 import org.ingredients.agriculturalfederation.entity.Frequency;
 import org.ingredients.agriculturalfederation.entity.MembershipFee;
-import org.ingredients.agriculturalfederation.entity.Status;
 import org.springframework.stereotype.Repository;
 
-import java.math.BigDecimal;
 import java.sql.*;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -44,7 +41,7 @@ public class JdbcMembershipFeeRepository implements MembershipFeeRepository {
                 membershipFee.setId(rs.getObject("id").toString());
                 membershipFee.setEligibleFrom(rs.getDate("eligible_from").toLocalDate());
                 membershipFee.setFrequency(Frequency.valueOf(rs.getString("frequency")));
-                membershipFee.setAmount(BigDecimal.valueOf(rs.getBigDecimal("amount").doubleValue()));
+                membershipFee.setAmount(rs.getBigDecimal("amount"));
                 membershipFee.setLabel(rs.getString("label"));
                 membershipFee.setStatus(ActivityStatus.valueOf(rs.getString("status")));
                 
