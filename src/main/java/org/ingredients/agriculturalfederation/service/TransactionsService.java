@@ -65,7 +65,11 @@ public class TransactionsService {
                 memberResponse.setPhoneNumber(member.getPhoneNumber());
                 memberResponse.setEmail(member.getEmail());
                 memberResponse.setOccupation(member.getOccupation().toString());
-                memberResponse.setReferees(member.getReferees());
+                memberResponse.setReferees(
+                        member.getReferees() == null
+                                ? null
+                                : member.getReferees().stream().map(Member::getId).collect(Collectors.toList())
+                );
                 response.setMemberDebited(memberResponse);
             }
             
