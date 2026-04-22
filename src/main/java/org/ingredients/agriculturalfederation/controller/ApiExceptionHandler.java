@@ -1,42 +1,32 @@
 package org.ingredients.agriculturalfederation.controller;
 
 import org.ingredients.agriculturalfederation.validator.exception.*;
+import org.springframework.http.MediaType;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.util.HashMap;
-import java.util.Map;
-
 @RestControllerAdvice
 public class ApiExceptionHandler {
 
     @ExceptionHandler({InvalidMemberException.class, InvalidCollectivityException.class})
-    public ResponseEntity<Map<String, String>> handleBadRequest(RuntimeException e) {
-        Map<String, String> error = new HashMap<>();
-        error.put("message", e.getMessage());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    public ResponseEntity<String> handleBadRequest(RuntimeException e) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).contentType(MediaType.TEXT_PLAIN).body(e.getMessage());
     }
 
     @ExceptionHandler({MemberNotFoundException.class, CollectivityNotFoundException.class})
-    public ResponseEntity<Map<String, String>> handleNotFound(RuntimeException e) {
-        Map<String, String> error = new HashMap<>();
-        error.put("message", e.getMessage());
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+    public ResponseEntity<String> handleNotFound(RuntimeException e) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).contentType(MediaType.TEXT_PLAIN).body(e.getMessage());
     }
 
     @ExceptionHandler({CollectivityIdentityAlreadyAssignedException.class, CollectivityIdentityConflictException.class})
-    public ResponseEntity<Map<String, String>> handleConflict(RuntimeException e) {
-        Map<String, String> error = new HashMap<>();
-        error.put("message", e.getMessage());
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    public ResponseEntity<String> handleConflict(RuntimeException e) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).contentType(MediaType.TEXT_PLAIN).body(e.getMessage());
     }
 
     @ExceptionHandler(ValidationException.class)
-    public ResponseEntity<Map<String, String>> handleTechnicalError(ValidationException e) {
-        Map<String, String> error = new HashMap<>();
-        error.put("message", "A technical error occurred during validation.");
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+    public ResponseEntity<String> handleTechnicalError(ValidationException e) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).contentType(MediaType.TEXT_PLAIN).body("A technical error occurred during validation.");
     }
 }
