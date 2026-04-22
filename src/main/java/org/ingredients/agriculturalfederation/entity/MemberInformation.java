@@ -1,13 +1,14 @@
 package org.ingredients.agriculturalfederation.entity;
 
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDate;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@SuperBuilder
 @EqualsAndHashCode
 public class MemberInformation {
     private String firstName;
@@ -16,7 +17,7 @@ public class MemberInformation {
     private Gender gender;
     private String address;
     private String profession;
-    private Integer phoneNumber;
+    private String phoneNumber;
     private String email;
     private MemberOccupation occupation;
 }
