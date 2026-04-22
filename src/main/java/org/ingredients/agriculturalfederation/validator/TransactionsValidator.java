@@ -20,4 +20,10 @@ public class TransactionsValidator {
         }
 
     }
+
+    public void validateCollectivityExists(String collectivityId, boolean exists) {
+        if (!exists) {
+            throw new IllegalArgumentException("Collectivity with id " + collectivityId + " not found");
+        }
+    }
 }
