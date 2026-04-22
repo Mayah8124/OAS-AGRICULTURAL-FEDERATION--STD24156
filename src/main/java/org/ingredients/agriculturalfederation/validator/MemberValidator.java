@@ -115,7 +115,7 @@ public class MemberValidator {
     }
 
     private boolean memberExists(String memberId) {
-        String sql = "SELECT COUNT(*) FROM member WHERE id = ?";
+        String sql = "SELECT 1 FROM member WHERE id = ? LIMIT 1";
         Connection connection = null;
         
         try {
@@ -124,21 +124,17 @@ public class MemberValidator {
             statement.setObject(1, UUID.fromString(memberId));
             ResultSet resultSet = statement.executeQuery();
             
-            if (resultSet.next()) {
-                return resultSet.getInt(1) > 0;
-            }
+            return resultSet.next();
             
         } catch (SQLException e) {
             throw new ValidationException("Error checking member existence", e);
         } finally {
             dataSourceConfig.closeConnection(connection);
         }
-        
-        return false;
     }
 
     private boolean collectivityExists(String collectivityId) {
-        String sql = "SELECT COUNT(*) FROM collectivity WHERE id = ?";
+        String sql = "SELECT 1 FROM collectivity WHERE id = ? LIMIT 1";
         Connection connection = null;
         
         try {
@@ -147,21 +143,28 @@ public class MemberValidator {
             statement.setObject(1, UUID.fromString(collectivityId));
             ResultSet resultSet = statement.executeQuery();
             
-            if (resultSet.next()) {
-                return resultSet.getInt(1) > 0;
-            }
+            return resultSet.next();
             
         } catch (SQLException e) {
             throw new ValidationException("Error checking collectivity existence", e);
         } finally {
             dataSourceConfig.closeConnection(connection);
         }
-        
-        return false;
     }
 
     private boolean isValidEmail(String email) {
-        String emailRegex = "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$";
-        return email != null && email.matches(emailRegex);
+        if (email == null) {
+            return false;
+        }
+
+        String trimmed = email.trim();
+        int atIndex = trimmed.indexOf('@');
+        if (atIndex <= 0 || atIndex != trimmed.lastIndexOf('@') || atIndex == trimmed.length() - 1) {
+            return false;
+        }
+
+        String domain = trimmed.substring(atIndex + 1);
+        int dotIndex = domain.indexOf('.');
+        return dotIndex > 0 && dotIndex < domain.length() - 1;
     }
 }

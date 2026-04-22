@@ -15,6 +15,8 @@ import java.util.List;
 @EqualsAndHashCode
 public class CreateCollectivityRequest {
     private String location;
+    private String name;
+    private Integer number;
     private List<String> members;
     private Boolean federationApproval;
     private CreateCollectivityStructureRequest structure;

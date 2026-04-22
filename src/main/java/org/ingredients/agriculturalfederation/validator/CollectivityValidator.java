@@ -135,7 +135,7 @@ public class CollectivityValidator {
     }
 
     private boolean memberExists(String memberId) {
-        String sql = "SELECT COUNT(*) FROM member WHERE id = ?";
+        String sql = "SELECT 1 FROM member WHERE id = ? LIMIT 1";
         Connection connection = null;
         
         try {
@@ -144,16 +144,12 @@ public class CollectivityValidator {
             statement.setObject(1, UUID.fromString(memberId));
             ResultSet resultSet = statement.executeQuery();
             
-            if (resultSet.next()) {
-                return resultSet.getInt(1) > 0;
-            }
+            return resultSet.next();
             
         } catch (SQLException e) {
             throw new ValidationException("Error checking member existence", e);
         } finally {
             dataSourceConfig.closeConnection(connection);
         }
-        
-        return false;
     }
 }

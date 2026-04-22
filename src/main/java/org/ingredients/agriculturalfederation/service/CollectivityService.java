@@ -9,7 +9,6 @@ import org.ingredients.agriculturalfederation.entity.Member;
 import org.ingredients.agriculturalfederation.repository.CollectivityRepository;
 import org.ingredients.agriculturalfederation.repository.MemberRepository;
 import org.ingredients.agriculturalfederation.validator.CollectivityValidator;
-import org.ingredients.agriculturalfederation.validator.CollectivityIdentityValidator;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -20,60 +19,53 @@ import java.util.UUID;
 public class CollectivityService {
 
     private final CollectivityValidator collectivityValidator;
-    private final CollectivityIdentityValidator collectivityIdentityValidator;
     private final CollectivityRepository collectivityRepository;
     private final MemberRepository memberRepository;
 
-    public CollectivityService(CollectivityValidator collectivityValidator, 
-                               CollectivityIdentityValidator collectivityIdentityValidator,
-                               CollectivityRepository collectivityRepository,
-                               MemberRepository memberRepository) {
+    public CollectivityService(CollectivityValidator collectivityValidator, CollectivityRepository collectivityRepository, MemberRepository memberRepository) {
         this.collectivityValidator = collectivityValidator;
-        this.collectivityIdentityValidator = collectivityIdentityValidator;
         this.collectivityRepository = collectivityRepository;
         this.memberRepository = memberRepository;
     }
 
-    public List<Collectivity> createCollectivities(List<CreateCollectivityRequest> request) {
-        if (request == null) {
+    public List<Collectivity> createCollectivities(List<CreateCollectivityRequest> requests) {
+        if (requests == null) {
             return List.of();
         }
 
         List<Collectivity> out = new ArrayList<>();
-        for (CreateCollectivityRequest c : request) {
-            collectivityValidator.validateCollectivity(c);
+        for (CreateCollectivityRequest req : requests) {
+            collectivityValidator.validateCollectivity(req);
 
-            String collectivityId = UUID.randomUUID().toString();
-            
-            CreateCollectivityStructureRequest s = c.getStructure();
-            Member president = memberRepository.findById(s.getPresident()).orElseThrow();
-            Member vicePresident = memberRepository.findById(s.getVicePresident()).orElseThrow();
-            Member treasurer = memberRepository.findById(s.getTreasurer()).orElseThrow();
-            Member secretary = memberRepository.findById(s.getSecretary()).orElseThrow();
+            Collectivity collectivity = new Collectivity();
+            collectivity.setId(UUID.randomUUID().toString());
+            collectivity.setLocation(req.getLocation());
+            collectivity.setName(req.getName());
+            collectivity.setNumber(req.getNumber());
+            collectivity.setStructure(toEntityStructure(req.getStructure()));
+            collectivity.setMembers(new ArrayList<>());
 
-            CollectivityStructure structure = new CollectivityStructure(
-                    president,
-                    vicePresident,
-                    treasurer,
-                    secretary
-            );
-
-            List<Member> members = memberRepository.findAllById(c.getMembers());
-
-            Collectivity collectivity = new Collectivity(collectivityId, c.getLocation(), null, null, structure, members);
-            
-            collectivityRepository.save(collectivity, c.getFederationApproval());
-            collectivityRepository.linkMembers(collectivityId, c.getMembers());
-
+            collectivityRepository.save(collectivity, false);
             out.add(collectivity);
         }
-
         return out;
     }
 
-    public Collectivity updateInformations(String collectivityId, CollectivityInformationRequest request) {
-        collectivityIdentityValidator.validate(collectivityId, request);
-        collectivityRepository.assignIdentity(collectivityId, request.getName(), request.getNumber());
-        return collectivityRepository.findById(collectivityId).orElseThrow();
+    public Collectivity updateInformations(String id, CollectivityInformationRequest request) {
+        collectivityRepository.assignIdentity(id, request.getName(), request.getNumber());
+        return collectivityRepository.findById(id).orElseThrow();
+    }
+
+    private CollectivityStructure toEntityStructure(CreateCollectivityStructureRequest structure) {
+        if (structure == null) {
+            return null;
+        }
+
+        Member president = memberRepository.findById(structure.getPresident()).orElse(null);
+        Member vicePresident = memberRepository.findById(structure.getVicePresident()).orElse(null);
+        Member treasurer = memberRepository.findById(structure.getTreasurer()).orElse(null);
+        Member secretary = memberRepository.findById(structure.getSecretary()).orElse(null);
+
+        return new CollectivityStructure(president, vicePresident, treasurer, secretary);
     }
 }

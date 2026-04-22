@@ -39,3 +39,69 @@ create table if not exists collectivity_structure (
     treasurer_member_id uuid not null references member(id),
     secretary_member_id uuid not null references member(id)
 );
+
+create table if not exists membership_fee (
+    id uuid primary key,
+    collectivity_id uuid not null references collectivity(id),
+    eligible_from date,
+    frequency text,
+    amount numeric,
+    label text,
+    status text
+);
+
+create table if not exists financial_account (
+    id uuid primary key,
+    type text not null
+);
+
+create table if not exists cash_account (
+    id uuid primary key references financial_account(id),
+    amount numeric
+);
+
+create table if not exists mobile_banking_account (
+    id uuid primary key references financial_account(id),
+    holder_name text,
+    mobile_banking_service text,
+    mobile_number text,
+    amount numeric
+);
+
+create table if not exists bank_account (
+    id uuid primary key references financial_account(id),
+    holder_name text,
+    bank_name text,
+    bank_code integer,
+    bank_branch_code integer,
+    bank_account_number integer,
+    bank_account_key integer,
+    amount numeric
+);
+
+create table if not exists member_payment (
+    id uuid primary key,
+    member_id uuid not null references member(id),
+    membership_fee_id uuid references membership_fee(id),
+    account_credited_id uuid not null references financial_account(id),
+    amount numeric,
+    payment_mode text,
+    creation_date date
+);
+
+create table if not exists collectivity_transaction (
+    id uuid primary key,
+    collectivity_id uuid not null references collectivity(id),
+    member_debited_id uuid references member(id),
+    account_credited_id uuid not null references financial_account(id),
+    amount numeric,
+    payment_mode text,
+    creation_date date
+);
+
+create index if not exists idx_membership_fee_collectivity_id on membership_fee(collectivity_id);
+create index if not exists idx_member_payment_member_id on member_payment(member_id);
+create index if not exists idx_member_payment_membership_fee_id on member_payment(membership_fee_id);
+create index if not exists idx_member_payment_creation_date on member_payment(creation_date);
+create index if not exists idx_collectivity_transaction_collectivity_id on collectivity_transaction(collectivity_id);
+create index if not exists idx_collectivity_transaction_creation_date on collectivity_transaction(creation_date);

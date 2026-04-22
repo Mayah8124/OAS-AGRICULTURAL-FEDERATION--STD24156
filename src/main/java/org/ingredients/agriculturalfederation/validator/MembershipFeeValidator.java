@@ -1,7 +1,7 @@
 package org.ingredients.agriculturalfederation.validator;
 
 import org.ingredients.agriculturalfederation.config.DataSourceConfig;
-import org.ingredients.agriculturalfederation.dto.request.CollectivityInformationRequest;
+import org.ingredients.agriculturalfederation.dto.request.CreateMembershipFeeRequest;
 import org.ingredients.agriculturalfederation.validator.exception.CollectivityNotFoundException;
 import org.ingredients.agriculturalfederation.validator.exception.InvalidCollectivityException;
 import org.ingredients.agriculturalfederation.validator.exception.ValidationException;
@@ -11,48 +11,46 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.UUID;
 
 @Component
-public class CollectivityIdentityValidator {
+public class MembershipFeeValidator {
 
     private final DataSourceConfig dataSourceConfig;
 
-    public CollectivityIdentityValidator(DataSourceConfig dataSourceConfig) {
+    public MembershipFeeValidator(DataSourceConfig dataSourceConfig) {
         this.dataSourceConfig = dataSourceConfig;
     }
 
-    public void validate(String collectivityId, CollectivityInformationRequest request) {
+    public void validateCreateRequests(String collectivityId, List<CreateMembershipFeeRequest> requests) {
         if (collectivityId == null || collectivityId.trim().isEmpty()) {
             throw new InvalidCollectivityException("Collectivity identifier is required");
         }
 
-        if (request == null) {
-            throw new InvalidCollectivityException("Identity payload cannot be null");
-        }
-
-        if (request.getName() == null || request.getName().trim().isEmpty()) {
-            throw new InvalidCollectivityException("Collectivity name is required");
-        }
-
-        String trimmedName = request.getName().trim();
-        if (trimmedName.length() < 3) {
-            throw new InvalidCollectivityException("Collectivity name must be at least 3 characters long");
-        }
-
-        if (trimmedName.length() > 100) {
-            throw new InvalidCollectivityException("Collectivity name must be at most 100 characters long");
-        }
-
-        if (request.getNumber() == null) {
-            throw new InvalidCollectivityException("Collectivity number is required");
-        }
-
-        if (request.getNumber() < 1) {
-            throw new InvalidCollectivityException("Collectivity number must be greater than or equal to 1");
-        }
-
         assertCollectivityExists(collectivityId);
+
+        if (requests == null) {
+            throw new InvalidCollectivityException("Request body is required");
+        }
+
+        for (CreateMembershipFeeRequest req : requests) {
+            if (req == null) {
+                throw new InvalidCollectivityException("Membership fee cannot be null");
+            }
+
+            if (req.getFrequency() == null) {
+                throw new InvalidCollectivityException("Frequency is required");
+            }
+
+            if (req.getAmount() == null) {
+                throw new InvalidCollectivityException("Amount is required");
+            }
+
+            if (req.getAmount().signum() < 0) {
+                throw new InvalidCollectivityException("Amount must be greater than or equal to 0");
+            }
+        }
     }
 
     private void assertCollectivityExists(String collectivityId) {
