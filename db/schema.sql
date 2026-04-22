@@ -39,3 +39,13 @@ create table if not exists collectivity_structure (
     treasurer_member_id uuid not null references member(id),
     secretary_member_id uuid not null references member(id)
 );
+
+create table if not exists membership_fee (
+    id uuid primary key,
+    eligible_from date not null,
+    frequency text not null,
+    amount numeric not null,
+    label text not null,
+    status text not null,
+    collectivity_id uuid not null references collectivity(id)
+);

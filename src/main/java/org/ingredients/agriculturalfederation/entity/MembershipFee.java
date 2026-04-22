@@ -9,5 +9,6 @@ import lombok.*;
 @EqualsAndHashCode(callSuper = true)
 public class MembershipFee extends CreateMemberShipFee {
     private String id;
-    private Status status;
+    private ActivityStatus status;
+    private String collectivityId;
 }
