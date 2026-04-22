@@ -28,8 +28,8 @@ public class CollectivitiesController {
         return collectivityService.createCollectivities(request);
     }
 
-    @PostMapping("/collectivities/{collectivityId}/identity")
-    @ResponseStatus(HttpStatus.CREATED)
+    @PostMapping("/collectivity/{collectivityId}/collectivity-assignement")
+    @ResponseStatus(HttpStatus.OK)
     public Collectivity assignCollectivityIdentity(
             @PathVariable String collectivityId,
             @RequestBody AssignCollectivityIdentity request

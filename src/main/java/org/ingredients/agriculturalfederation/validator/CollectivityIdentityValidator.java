@@ -35,12 +35,21 @@ public class CollectivityIdentityValidator {
             throw new InvalidCollectivityException("Collectivity name is required");
         }
 
+        String trimmedName = request.getName().trim();
+        if (trimmedName.length() < 3) {
+            throw new InvalidCollectivityException("Collectivity name must be at least 3 characters long");
+        }
+
+        if (trimmedName.length() > 100) {
+            throw new InvalidCollectivityException("Collectivity name must be at most 100 characters long");
+        }
+
         if (request.getNumber() == null) {
             throw new InvalidCollectivityException("Collectivity number is required");
         }
 
-        if (request.getNumber() <= 0) {
-            throw new InvalidCollectivityException("Collectivity number must be greater than 0");
+        if (request.getNumber() < 1) {
+            throw new InvalidCollectivityException("Collectivity number must be greater than or equal to 1");
         }
 
         assertCollectivityExists(collectivityId);
