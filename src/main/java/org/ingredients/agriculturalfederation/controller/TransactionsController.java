@@ -1,6 +1,6 @@
 package org.ingredients.agriculturalfederation.controller;
 
-import org.ingredients.agriculturalfederation.entity.CollectivityTransaction;
+import org.ingredients.agriculturalfederation.dto.response.CollectivityTransactionResponse;
 import org.ingredients.agriculturalfederation.service.TransactionsService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,12 +17,12 @@ public class TransactionsController {
     }
 
     @GetMapping("/collectivities/{id}/transactions")
-    public ResponseEntity<List<CollectivityTransaction>> getTransactionsBetween(
+    public ResponseEntity<List<CollectivityTransactionResponse>> getTransactionsBetween(
             @PathVariable String id,
             @RequestParam String from,
             @RequestParam String to
     ) {
-        List<CollectivityTransaction> transactions = transactionsService.getCollectivityTransactionsBetween(id, LocalDate.parse(from), LocalDate.parse(to));
+        List<CollectivityTransactionResponse> transactions = transactionsService.getCollectivityTransactionsBetween(id, LocalDate.parse(from), LocalDate.parse(to));
         return ResponseEntity.ok(transactions);
     }
 }
