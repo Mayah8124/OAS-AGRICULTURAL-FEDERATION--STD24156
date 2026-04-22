@@ -26,6 +26,6 @@ public class MembershipFeesController {
             @PathVariable String id,
             @RequestBody List<CreateMembershipFeeRequest> request
     ) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(membershipFeeService.createMembershipFees(id, request));
+        return ResponseEntity.status(HttpStatus.OK).body(membershipFeeService.createMembershipFees(id, request));
     }
 }
