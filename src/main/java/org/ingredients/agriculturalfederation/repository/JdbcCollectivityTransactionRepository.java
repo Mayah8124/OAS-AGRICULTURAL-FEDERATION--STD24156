@@ -74,17 +74,111 @@ public class JdbcCollectivityTransactionRepository implements CollectivityTransa
 
     @Override
     public CollectivityTransaction save(CollectivityTransaction transaction) {
-        throw new UnsupportedOperationException("Not implemented");
+        String sql = "INSERT INTO collectivity_transaction (id, collectivity_id, member_debited_id, account_credited_id, amount, payment_mode, creation_date) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?)";
+
+        String sqlCollectivityIdByMember = "SELECT collectivity_id FROM member WHERE id = ?";
+
+        Connection connection = null;
+        try {
+            connection = dataSourceConfig.getConnection();
+
+            try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                if (transaction == null) {
+                    throw new IllegalArgumentException("Transaction is required");
+                }
+                if (transaction.getId() == null || transaction.getId().trim().isEmpty()) {
+                    throw new IllegalArgumentException("Transaction id is required");
+                }
+                if (transaction.getMemberDebited() == null || transaction.getMemberDebited().getId() == null || transaction.getMemberDebited().getId().trim().isEmpty()) {
+                    throw new IllegalArgumentException("Transaction memberDebited.id is required to derive collectivity id");
+                }
+                if (transaction.getAccountCredited() == null || transaction.getAccountCredited().getId() == null || transaction.getAccountCredited().getId().trim().isEmpty()) {
+                    throw new IllegalArgumentException("Transaction accountCredited.id is required");
+                }
+                if (transaction.getCreationDate() == null) {
+                    throw new IllegalArgumentException("Transaction creationDate is required");
+                }
+                if (transaction.getPaymentMode() == null) {
+                    throw new IllegalArgumentException("Transaction paymentMode is required");
+                }
+
+                String collectivityId;
+                try (PreparedStatement stmtCollectivity = connection.prepareStatement(sqlCollectivityIdByMember)) {
+                    stmtCollectivity.setObject(1, java.util.UUID.fromString(transaction.getMemberDebited().getId()));
+                    try (ResultSet rs = stmtCollectivity.executeQuery()) {
+                        if (!rs.next() || rs.getObject("collectivity_id") == null) {
+                            throw new IllegalArgumentException("Cannot derive collectivity id from member " + transaction.getMemberDebited().getId());
+                        }
+                        collectivityId = rs.getObject("collectivity_id").toString();
+                    }
+                }
+
+                statement.setObject(1, java.util.UUID.fromString(transaction.getId()));
+                statement.setObject(2, java.util.UUID.fromString(collectivityId));
+                statement.setObject(3, java.util.UUID.fromString(transaction.getMemberDebited().getId()));
+                statement.setObject(4, java.util.UUID.fromString(transaction.getAccountCredited().getId()));
+                statement.setBigDecimal(5, transaction.getAmount());
+                statement.setString(6, transaction.getPaymentMode().name());
+                statement.setDate(7, Date.valueOf(transaction.getCreationDate()));
+
+                statement.executeUpdate();
+                return transaction;
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            dataSourceConfig.closeConnection(connection);
+        }
     }
 
     @Override
     public CollectivityTransaction findById(String transactionId) {
-        throw new UnsupportedOperationException("Not implemented");
+       String sql = "SELECT id, collectivity_id, member_debited_id, account_credited_id, amount, payment_mode, creation_date " +
+                "FROM collectivity_transaction WHERE id = ?";
+ 
+        Connection connection = null;
+        try {
+            connection = dataSourceConfig.getConnection();
+            try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                statement.setObject(1, java.util.UUID.fromString(transactionId));
+                try (ResultSet resultSet = statement.executeQuery()) {
+                    if (!resultSet.next()) {
+                        return null;
+                    }
+                    return mapRow(resultSet);
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            dataSourceConfig.closeConnection(connection);
+        }
     }
 
     @Override
     public List<CollectivityTransaction> findByCollectivityId(String collectivityId) {
-        throw new UnsupportedOperationException("Not implemented");
+        String sql = "SELECT id, collectivity_id, member_debited_id, account_credited_id, amount, payment_mode, creation_date " +
+                "FROM collectivity_transaction WHERE collectivity_id = ? ORDER BY creation_date DESC";
+ 
+        Connection connection = null;
+        try {
+            connection = dataSourceConfig.getConnection();
+            try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                statement.setObject(1, java.util.UUID.fromString(collectivityId));
+                try (ResultSet resultSet = statement.executeQuery()) {
+                    List<CollectivityTransaction> transactions = new ArrayList<>();
+                    while (resultSet.next()) {
+                        transactions.add(mapRow(resultSet));
+                    }
+                    return transactions;
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            dataSourceConfig.closeConnection(connection);
+        }
     }
 
     private static CollectivityTransaction mapRow(ResultSet resultSet) throws SQLException {

@@ -36,6 +36,10 @@ public class JdbcMemberPaymentRepository implements MemberPaymentRepository {
 
         String sqlPayment = "INSERT INTO member_payment (id, member_id, membership_fee_id, account_credited_id, amount, payment_mode, creation_date) VALUES (?, ?, ?, ?, ?, ?, ?)";
         String sqlTransaction = "INSERT INTO collectivity_transaction (id, collectivity_id, member_debited_id, account_credited_id, amount, payment_mode, creation_date) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        String sqlLinkAccount = "INSERT INTO collectivity_financial_account (collectivity_id, financial_account_id) VALUES (?, ?) ON CONFLICT DO NOTHING";
+        String sqlUpsertBalance = "INSERT INTO financial_account_balance (financial_account_id, at_date, amount) " +
+                "VALUES (?, ?, ?) " +
+                "ON CONFLICT (financial_account_id, at_date) DO UPDATE SET amount = financial_account_balance.amount + EXCLUDED.amount";
 
         Connection conn = null;
         try {
@@ -50,7 +54,9 @@ public class JdbcMemberPaymentRepository implements MemberPaymentRepository {
                 String transactionId = UUID.randomUUID().toString();
 
                 try (PreparedStatement stmtPayment = conn.prepareStatement(sqlPayment);
-                     PreparedStatement stmtTransaction = conn.prepareStatement(sqlTransaction)) {
+                     PreparedStatement stmtTransaction = conn.prepareStatement(sqlTransaction);
+                     PreparedStatement stmtLinkAccount = conn.prepareStatement(sqlLinkAccount);
+                     PreparedStatement stmtUpsertBalance = conn.prepareStatement(sqlUpsertBalance)) {
 
                     stmtPayment.setObject(1, UUID.fromString(paymentId));
                     stmtPayment.setObject(2, UUID.fromString(memberId));
@@ -75,6 +81,15 @@ public class JdbcMemberPaymentRepository implements MemberPaymentRepository {
                     stmtTransaction.setString(6, req.getPaymentMode().name());
                     stmtTransaction.setDate(7, Date.valueOf(today));
                     stmtTransaction.executeUpdate();
+
+                    stmtLinkAccount.setObject(1, UUID.fromString(collectivityId));
+                    stmtLinkAccount.setObject(2, UUID.fromString(req.getAccountCreditedIdentifier()));
+                    stmtLinkAccount.executeUpdate();
+
+                    stmtUpsertBalance.setObject(1, UUID.fromString(req.getAccountCreditedIdentifier()));
+                    stmtUpsertBalance.setDate(2, Date.valueOf(today));
+                    stmtUpsertBalance.setBigDecimal(3, req.getAmount());
+                    stmtUpsertBalance.executeUpdate();
                 }
 
                 out.add(MemberPaymentResponse.builder()

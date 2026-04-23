@@ -79,6 +79,13 @@ create table if not exists bank_account (
     amount numeric
 );
 
+create table if not exists financial_account_balance (
+    financial_account_id uuid not null references financial_account(id),
+    at_date date not null,
+    amount numeric,
+    primary key (financial_account_id, at_date)
+);
+
 create table if not exists member_payment (
     id uuid primary key,
     member_id uuid not null references member(id),
@@ -87,6 +94,12 @@ create table if not exists member_payment (
     amount numeric,
     payment_mode text,
     creation_date date
+);
+
+create table if not exists collectivity_financial_account (
+    collectivity_id uuid not null references collectivity(id),
+    financial_account_id uuid not null references financial_account(id),
+    primary key (collectivity_id, financial_account_id)
 );
 
 create table if not exists collectivity_transaction (
@@ -103,5 +116,8 @@ create index if not exists idx_membership_fee_collectivity_id on membership_fee(
 create index if not exists idx_member_payment_member_id on member_payment(member_id);
 create index if not exists idx_member_payment_membership_fee_id on member_payment(membership_fee_id);
 create index if not exists idx_member_payment_creation_date on member_payment(creation_date);
+create index if not exists idx_financial_account_balance_at_date on financial_account_balance(at_date);
+create index if not exists idx_collectivity_financial_account_collectivity_id on collectivity_financial_account(collectivity_id);
+create index if not exists idx_collectivity_financial_account_financial_account_id on collectivity_financial_account(financial_account_id);
 create index if not exists idx_collectivity_transaction_collectivity_id on collectivity_transaction(collectivity_id);
 create index if not exists idx_collectivity_transaction_creation_date on collectivity_transaction(creation_date);
