@@ -50,4 +50,9 @@ public class CollectivitiesController {
     ) {
         return ResponseEntity.status(HttpStatus.OK).body(membershipFeeService.createMembershipFees(id, request));
     }
+
+    @GetMapping("/collectivities/{id}")
+    public ResponseEntity<Collectivity> getCollectivityById(@PathVariable String id) {
+        return ResponseEntity.status(HttpStatus.OK).body(collectivityService.getCollectivityById(id));
+    }
 }
