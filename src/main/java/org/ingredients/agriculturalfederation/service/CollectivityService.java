@@ -9,6 +9,7 @@ import org.ingredients.agriculturalfederation.entity.Member;
 import org.ingredients.agriculturalfederation.repository.CollectivityRepository;
 import org.ingredients.agriculturalfederation.repository.MemberRepository;
 import org.ingredients.agriculturalfederation.validator.CollectivityValidator;
+import org.ingredients.agriculturalfederation.validator.exception.CollectivityNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -67,5 +68,10 @@ public class CollectivityService {
         Member secretary = memberRepository.findById(structure.getSecretary()).orElse(null);
 
         return new CollectivityStructure(president, vicePresident, treasurer, secretary);
+    }
+
+    public Collectivity getCollectivityById(String id) {
+        return collectivityRepository.findById(id)
+                .orElseThrow(() -> new CollectivityNotFoundException("Collectivity with ID " + id + " not found"));
     }
 }
