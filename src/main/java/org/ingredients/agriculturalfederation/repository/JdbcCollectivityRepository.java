@@ -3,7 +3,9 @@ package org.ingredients.agriculturalfederation.repository;
 import org.ingredients.agriculturalfederation.config.DataSourceConfig;
 import org.ingredients.agriculturalfederation.entity.Collectivity;
 import org.ingredients.agriculturalfederation.entity.CollectivityStructure;
+import org.ingredients.agriculturalfederation.entity.Gender;
 import org.ingredients.agriculturalfederation.entity.Member;
+import org.ingredients.agriculturalfederation.entity.MemberOccupation;
 import org.ingredients.agriculturalfederation.validator.exception.CollectivityIdentityAlreadyAssignedException;
 import org.ingredients.agriculturalfederation.validator.exception.CollectivityIdentityConflictException;
 import org.ingredients.agriculturalfederation.validator.exception.CollectivityNotFoundException;
@@ -189,5 +191,84 @@ public class JdbcCollectivityRepository implements CollectivityRepository {
             dataSourceConfig.closeConnection(conn);
         }
         return memberRepository.findAllById(memberIds);
+    }
+
+    public Optional<Collectivity> findByIdWithMembers(String id) {
+        String sql = """
+                        SELECT c.id, c.location, c.name, c.number,
+                        cs.president_member_id, cs.vice_president_member_id, cs.treasurer_member_id, cs.secretary_member_id,
+                        m.id as member_id, m.first_name, m.last_name, m.birth_date, m.gender, m.address, m.profession,
+                        m.phone_number, m.email, m.occupation
+                        FROM collectivity
+                        LEFT JOIN collectivity_structure cs ON c.id = cs.collectivity_id
+                        LEFT JOIN collectivity_member cm ON c.id = cm.collectivity_id
+                        LEFT JOIN member m ON cm.member_id = m.id
+                        WHERE c.id = ?
+                    """;
+
+        Connection conn = null;
+        try {
+            conn = dataSourceConfig.getConnection();
+            PreparedStatement stmt = conn.prepareStatement(sql);
+            stmt.setObject(1, UUID.fromString(id));
+            ResultSet rs = stmt.executeQuery();
+            
+            Collectivity collectivity = null;
+            List<Member> members = new ArrayList<>();
+            
+            while (rs.next()) {
+                if (collectivity == null) {
+                    collectivity = new Collectivity();
+                    collectivity.setId(rs.getObject("id").toString());
+                    collectivity.setLocation(rs.getString("location"));
+                    collectivity.setName(rs.getString("name"));
+                    Object numberObj = rs.getObject("number");
+                    collectivity.setNumber(numberObj == null ? null : ((Number) numberObj).intValue());
+                    
+                    String presidentId = rs.getObject("president_member_id") != null ?
+                        rs.getObject("president_member_id").toString() : null;
+                    String vicePresidentId = rs.getObject("vice_president_member_id") != null ? 
+                        rs.getObject("vice_president_member_id").toString() : null;
+                    String treasurerId = rs.getObject("treasurer_member_id") != null ? 
+                        rs.getObject("treasurer_member_id").toString() : null;
+                    String secretaryId = rs.getObject("secretary_member_id") != null ? 
+                        rs.getObject("secretary_member_id").toString() : null;
+                    
+                    Member president = presidentId != null ? memberRepository.findById(presidentId).orElse(null) : null;
+                    Member vicePresident = vicePresidentId != null ? memberRepository.findById(vicePresidentId).orElse(null) : null;
+                    Member treasurer = treasurerId != null ? memberRepository.findById(treasurerId).orElse(null) : null;
+                    Member secretary = secretaryId != null ? memberRepository.findById(secretaryId).orElse(null) : null;
+                    
+                    collectivity.setStructure(new CollectivityStructure(president, vicePresident, treasurer, secretary));
+                }
+                
+                String memberId = rs.getObject("member_id") != null ? rs.getObject("member_id").toString() : null;
+                if (memberId != null) {
+                    Member member = new Member();
+                    member.setId(memberId);
+                    member.setFirstName(rs.getString("first_name"));
+                    member.setLastName(rs.getString("last_name"));
+                    member.setBirthDate(rs.getDate("birth_date") != null ? rs.getDate("birth_date").toLocalDate() : null);
+                    member.setGender(rs.getString("gender") != null ? Gender.valueOf(rs.getString("gender")) : null);
+                    member.setAddress(rs.getString("address"));
+                    member.setProfession(rs.getString("profession"));
+                    member.setPhoneNumber(rs.getString("phone_number"));
+                    member.setEmail(rs.getString("email"));
+                    member.setOccupation(rs.getString("occupation") != null ? MemberOccupation.valueOf(rs.getString("occupation")) : null);
+                    
+                    members.add(member);
+                }
+            }
+            
+            if (collectivity != null) {
+                collectivity.setMembers(members);
+                return Optional.of(collectivity);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error finding collectivity with members", e);
+        } finally {
+            dataSourceConfig.closeConnection(conn);
+        }
+        return Optional.empty();
     }
 }

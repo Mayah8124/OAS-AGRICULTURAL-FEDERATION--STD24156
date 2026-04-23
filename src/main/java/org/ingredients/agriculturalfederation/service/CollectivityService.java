@@ -70,6 +70,6 @@ public class CollectivityService {
     }
 
     public Collectivity getCollectivityById(String id) {
-        return collectivityRepository.findById(id).get();
+        return collectivityRepository.findByIdWithMembers(id).get();
     }
 }

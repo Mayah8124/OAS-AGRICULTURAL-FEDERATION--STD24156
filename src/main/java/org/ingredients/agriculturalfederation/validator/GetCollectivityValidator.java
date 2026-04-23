@@ -34,7 +34,7 @@ public class GetCollectivityValidator {
     }
     
     private void validateCollectivityExists(String id) {
-        if (!collectivityRepository.findById(id).isPresent()) {
+        if (!collectivityRepository.findByIdWithMembers(id).isPresent()) {
             throw new CollectivityNotFoundException("Collectivity with ID " + id + " not found");
         }
     }
