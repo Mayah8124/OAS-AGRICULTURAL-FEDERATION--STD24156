@@ -37,6 +37,26 @@ paths:
           description: Collectivity without federation approval or structure missing.
         404:
           description: Member not found.
+  '/collectivities/{id}':
+    get:
+      summary: Retrieve collectivity by id
+      description: |
+        Retrieve collectivity information, including its members list.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+      responses:
+        200:
+          description: Collectivity for the provided id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Collectivity'
+        404:
+          description: Collectivity not found.
   '/collectivities/{id}/informations':
     put:
       summary: Attribute collectivity informations to specific collectivity
@@ -144,6 +164,36 @@ paths:
                   $ref: '#/components/schemas/CollectivityTransaction'
         400:
           description: Provided query parameters occur some exceptions.
+        404:
+          description: Collectivity not found.
+  '/collectivities/{id}/financialAccounts':
+    get:
+      summary: Retrieve collectivity financial accounts at a given date
+      description: |
+        Query parameter `at` is mandatory to retrieve financial accounts balances at the provided date.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: at
+          schema:
+            type: string
+            format: date
+          required: true
+      responses:
+        200:
+          description: List of financial accounts for the specific collectivity at the provided date
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FinancialAccount'
+        400:
+          description: Provided query parameter occurs some exceptions.
         404:
           description: Collectivity not found.
   '/members':
