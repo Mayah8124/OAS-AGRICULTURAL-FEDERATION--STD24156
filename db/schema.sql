@@ -1,5 +1,5 @@
 create table if not exists collectivity (
-    id uuid primary key,
+    id varchar(50) primary key,
     location text not null,
     federation_approval boolean not null,
     name text unique,
@@ -7,7 +7,7 @@ create table if not exists collectivity (
 );
 
 create table if not exists member (
-    id uuid primary key,
+    id varchar(50) primary key,
     first_name text,
     last_name text,
     birth_date date,
@@ -17,51 +17,51 @@ create table if not exists member (
     phone_number varchar(50),
     email text,
     occupation text,
-    collectivity_id uuid references collectivity(id)
+    collectivity_id varchar(50) references collectivity(id)
 );
 
 create table if not exists member_referee (
-    member_id uuid not null references member(id),
-    referee_id uuid not null references member(id),
+    member_id varchar(50) not null references member(id),
+    referee_id varchar(50) not null references member(id),
     primary key (member_id, referee_id)
 );
 
 create table if not exists collectivity_member (
-    collectivity_id uuid not null references collectivity(id),
-    member_id uuid not null references member(id),
+    collectivity_id varchar(50) not null references collectivity(id),
+    member_id varchar(50) not null references member(id),
     primary key (collectivity_id, member_id)
 );
 
 create table if not exists collectivity_structure (
-    collectivity_id uuid primary key references collectivity(id),
-    president_member_id uuid not null references member(id),
-    vice_president_member_id uuid not null references member(id),
-    treasurer_member_id uuid not null references member(id),
-    secretary_member_id uuid not null references member(id)
+    collectivity_id varchar(50) primary key references collectivity(id),
+    president_member_id varchar(50) not null references member(id),
+    vice_president_member_id varchar(50) not null references member(id),
+    treasurer_member_id varchar(50) not null references member(id),
+    secretary_member_id varchar(50) not null references member(id)
 );
 
 create table if not exists membership_fee (
-    id uuid primary key,
+    id varchar(50) primary key,
     eligible_from date not null,
     frequency text not null,
     amount numeric not null,
     label text not null,
     status text not null,
-    collectivity_id uuid not null references collectivity(id)
+    collectivity_id varchar(50) not null references collectivity(id)
 );
 
 create table if not exists financial_account (
-    id uuid primary key,
+    id varchar(50) primary key,
     type text not null
 );
 
 create table if not exists cash_account (
-    id uuid primary key references financial_account(id),
+    id varchar(50) primary key references financial_account(id),
     amount numeric
 );
 
 create table if not exists mobile_banking_account (
-    id uuid primary key references financial_account(id),
+    id varchar(50) primary key references financial_account(id),
     holder_name text,
     mobile_banking_service text,
     mobile_number text,
@@ -69,7 +69,7 @@ create table if not exists mobile_banking_account (
 );
 
 create table if not exists bank_account (
-    id uuid primary key references financial_account(id),
+    id varchar(50) primary key references financial_account(id),
     holder_name text,
     bank_name text,
     bank_code integer,
@@ -80,33 +80,33 @@ create table if not exists bank_account (
 );
 
 create table if not exists financial_account_balance (
-    financial_account_id uuid not null references financial_account(id),
+    financial_account_id varchar(50) not null references financial_account(id),
     at_date date not null,
     amount numeric,
     primary key (financial_account_id, at_date)
 );
 
 create table if not exists member_payment (
-    id uuid primary key,
-    member_id uuid not null references member(id),
-    membership_fee_id uuid references membership_fee(id),
-    account_credited_id uuid not null references financial_account(id),
+    id varchar(50) primary key,
+    member_id varchar(50) not null references member(id),
+    membership_fee_id varchar(50) references membership_fee(id),
+    account_credited_id varchar(50) not null references financial_account(id),
     amount numeric,
     payment_mode text,
     creation_date date
 );
 
 create table if not exists collectivity_financial_account (
-    collectivity_id uuid not null references collectivity(id),
-    financial_account_id uuid not null references financial_account(id),
+    collectivity_id varchar(50) not null references collectivity(id),
+    financial_account_id varchar(50) not null references financial_account(id),
     primary key (collectivity_id, financial_account_id)
 );
 
 create table if not exists collectivity_transaction (
-    id uuid primary key,
-    collectivity_id uuid not null references collectivity(id),
-    member_debited_id uuid references member(id),
-    account_credited_id uuid not null references financial_account(id),
+    id varchar(50) primary key,
+    collectivity_id varchar(50) not null references collectivity(id),
+    member_debited_id varchar(50) references member(id),
+    account_credited_id varchar(50) not null references financial_account(id),
     amount numeric,
     payment_mode text,
     creation_date date

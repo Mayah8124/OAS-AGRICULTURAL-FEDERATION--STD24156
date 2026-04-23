@@ -16,7 +16,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.time.LocalDate;
-import java.util.UUID;
 
 @Repository
 public class JdbcCollectivityFinancialAccountRepository implements CollectivityFinancialAccountRepository {
@@ -34,7 +33,7 @@ public class JdbcCollectivityFinancialAccountRepository implements CollectivityF
         try {
             connection = dataSourceConfig.getConnection();
             try (PreparedStatement statement = connection.prepareStatement(sql)) {
-                statement.setObject(1, UUID.fromString(collectivityId));
+                statement.setString(1, collectivityId);
                 try (ResultSet rs = statement.executeQuery()) {
                     return rs.next();
                 }
@@ -66,7 +65,7 @@ public class JdbcCollectivityFinancialAccountRepository implements CollectivityF
             connection = dataSourceConfig.getConnection();
             try (PreparedStatement statement = connection.prepareStatement(sql)) {
                 statement.setDate(1, java.sql.Date.valueOf(at));
-                statement.setObject(2, UUID.fromString(collectivityId));
+                statement.setString(2, collectivityId);
 
                 try (ResultSet rs = statement.executeQuery()) {
                     List<FinancialAccount> out = new ArrayList<>();

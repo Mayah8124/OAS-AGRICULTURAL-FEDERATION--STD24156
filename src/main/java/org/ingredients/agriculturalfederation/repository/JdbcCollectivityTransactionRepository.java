@@ -34,7 +34,7 @@ public class JdbcCollectivityTransactionRepository implements CollectivityTransa
             connection = dataSourceConfig.getConnection();
 
             try (PreparedStatement statement = connection.prepareStatement(sql)) {
-                statement.setObject(1, java.util.UUID.fromString(collectivityId));
+                statement.setString(1, collectivityId);
                 statement.setDate(2, Date.valueOf(fromDate));
                 statement.setDate(3, Date.valueOf(toDate));
 
@@ -60,7 +60,7 @@ public class JdbcCollectivityTransactionRepository implements CollectivityTransa
         try {
             connection = dataSourceConfig.getConnection();
             try (PreparedStatement statement = connection.prepareStatement(sql)) {
-                statement.setObject(1, java.util.UUID.fromString(collectivityId));
+                statement.setString(1, collectivityId);
                 try (ResultSet resultSet = statement.executeQuery()) {
                     return resultSet.next();
                 }
@@ -105,7 +105,7 @@ public class JdbcCollectivityTransactionRepository implements CollectivityTransa
 
                 String collectivityId;
                 try (PreparedStatement stmtCollectivity = connection.prepareStatement(sqlCollectivityIdByMember)) {
-                    stmtCollectivity.setObject(1, java.util.UUID.fromString(transaction.getMemberDebited().getId()));
+                    stmtCollectivity.setString(1, transaction.getMemberDebited().getId());
                     try (ResultSet rs = stmtCollectivity.executeQuery()) {
                         if (!rs.next() || rs.getObject("collectivity_id") == null) {
                             throw new IllegalArgumentException("Cannot derive collectivity id from member " + transaction.getMemberDebited().getId());
@@ -114,10 +114,10 @@ public class JdbcCollectivityTransactionRepository implements CollectivityTransa
                     }
                 }
 
-                statement.setObject(1, java.util.UUID.fromString(transaction.getId()));
-                statement.setObject(2, java.util.UUID.fromString(collectivityId));
-                statement.setObject(3, java.util.UUID.fromString(transaction.getMemberDebited().getId()));
-                statement.setObject(4, java.util.UUID.fromString(transaction.getAccountCredited().getId()));
+                statement.setString(1, transaction.getId());
+                statement.setString(2, collectivityId);
+                statement.setString(3, transaction.getMemberDebited().getId());
+                statement.setString(4, transaction.getAccountCredited().getId());
                 statement.setBigDecimal(5, transaction.getAmount());
                 statement.setString(6, transaction.getPaymentMode().name());
                 statement.setDate(7, Date.valueOf(transaction.getCreationDate()));
@@ -141,7 +141,7 @@ public class JdbcCollectivityTransactionRepository implements CollectivityTransa
         try {
             connection = dataSourceConfig.getConnection();
             try (PreparedStatement statement = connection.prepareStatement(sql)) {
-                statement.setObject(1, java.util.UUID.fromString(transactionId));
+                statement.setString(1, transactionId);
                 try (ResultSet resultSet = statement.executeQuery()) {
                     if (!resultSet.next()) {
                         return null;
@@ -165,7 +165,7 @@ public class JdbcCollectivityTransactionRepository implements CollectivityTransa
         try {
             connection = dataSourceConfig.getConnection();
             try (PreparedStatement statement = connection.prepareStatement(sql)) {
-                statement.setObject(1, java.util.UUID.fromString(collectivityId));
+                statement.setString(1, collectivityId);
                 try (ResultSet resultSet = statement.executeQuery()) {
                     List<CollectivityTransaction> transactions = new ArrayList<>();
                     while (resultSet.next()) {

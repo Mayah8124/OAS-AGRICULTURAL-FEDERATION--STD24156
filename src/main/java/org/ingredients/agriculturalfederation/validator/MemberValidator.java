@@ -11,7 +11,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 import java.util.HashSet;
 
 @Component
@@ -121,7 +120,7 @@ public class MemberValidator {
         try {
             connection = dataSourceConfig.getConnection();
             PreparedStatement statement = connection.prepareStatement(sql);
-            statement.setObject(1, UUID.fromString(memberId));
+            statement.setString(1, memberId);
             ResultSet resultSet = statement.executeQuery();
             
             return resultSet.next();
@@ -140,7 +139,7 @@ public class MemberValidator {
         try {
             connection = dataSourceConfig.getConnection();
             PreparedStatement statement = connection.prepareStatement(sql);
-            statement.setObject(1, UUID.fromString(collectivityId));
+            statement.setString(1, collectivityId);
             ResultSet resultSet = statement.executeQuery();
             
             return resultSet.next();

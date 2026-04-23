@@ -15,7 +15,6 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 @Repository
 public class JdbcCollectivityRepository implements CollectivityRepository {
@@ -39,18 +38,18 @@ public class JdbcCollectivityRepository implements CollectivityRepository {
             conn.setAutoCommit(false);
 
             try (PreparedStatement stmtColl = conn.prepareStatement(sqlCollectivity)) {
-                stmtColl.setObject(1, UUID.fromString(collectivity.getId()));
+                stmtColl.setString(1, collectivity.getId());
                 stmtColl.setString(2, collectivity.getLocation());
                 stmtColl.setBoolean(3, federationApproval);
                 stmtColl.executeUpdate();
             }
 
             try (PreparedStatement stmtStr = conn.prepareStatement(sqlStructure)) {
-                stmtStr.setObject(1, UUID.fromString(collectivity.getId()));
-                stmtStr.setObject(2, UUID.fromString(collectivity.getStructure().getPresident().getId()));
-                stmtStr.setObject(3, UUID.fromString(collectivity.getStructure().getVicePresident().getId()));
-                stmtStr.setObject(4, UUID.fromString(collectivity.getStructure().getTreasurer().getId()));
-                stmtStr.setObject(5, UUID.fromString(collectivity.getStructure().getSecretary().getId()));
+                stmtStr.setString(1, collectivity.getId());
+                stmtStr.setString(2, collectivity.getStructure().getPresident().getId());
+                stmtStr.setString(3, collectivity.getStructure().getVicePresident().getId());
+                stmtStr.setString(4, collectivity.getStructure().getTreasurer().getId());
+                stmtStr.setString(5, collectivity.getStructure().getSecretary().getId());
                 stmtStr.executeUpdate();
             }
 
@@ -81,7 +80,7 @@ public class JdbcCollectivityRepository implements CollectivityRepository {
         try {
             conn = dataSourceConfig.getConnection();
             PreparedStatement stmt = conn.prepareStatement(sql);
-            stmt.setObject(1, UUID.fromString(id));
+            stmt.setString(1, id);
             ResultSet rs = stmt.executeQuery();
 
             if (rs.next()) {
@@ -120,7 +119,7 @@ public class JdbcCollectivityRepository implements CollectivityRepository {
             conn = dataSourceConfig.getConnection();
 
             try (PreparedStatement stmtSelect = conn.prepareStatement(sqlSelect)) {
-                stmtSelect.setObject(1, UUID.fromString(collectivityId));
+                stmtSelect.setString(1, collectivityId);
                 ResultSet rs = stmtSelect.executeQuery();
                 if (!rs.next()) {
                     throw new CollectivityNotFoundException("Collectivity with ID " + collectivityId + " not found");
@@ -140,7 +139,7 @@ public class JdbcCollectivityRepository implements CollectivityRepository {
                 } else {
                     stmtUpdate.setInt(2, number);
                 }
-                stmtUpdate.setObject(3, UUID.fromString(collectivityId));
+                stmtUpdate.setString(3, collectivityId);
                 stmtUpdate.executeUpdate();
             }
         } catch (SQLException e) {
@@ -161,8 +160,8 @@ public class JdbcCollectivityRepository implements CollectivityRepository {
             conn = dataSourceConfig.getConnection();
             PreparedStatement stmt = conn.prepareStatement(sql);
             for (String memberId : memberIds) {
-                stmt.setObject(1, UUID.fromString(collectivityId));
-                stmt.setObject(2, UUID.fromString(memberId));
+                stmt.setString(1, collectivityId);
+                stmt.setString(2, memberId);
                 stmt.addBatch();
             }
             stmt.executeBatch();
@@ -180,7 +179,7 @@ public class JdbcCollectivityRepository implements CollectivityRepository {
         try {
             conn = dataSourceConfig.getConnection();
             PreparedStatement stmt = conn.prepareStatement(sql);
-            stmt.setObject(1, UUID.fromString(collectivityId));
+            stmt.setString(1, collectivityId);
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
                 memberIds.add(rs.getObject("member_id").toString());
@@ -210,7 +209,7 @@ public class JdbcCollectivityRepository implements CollectivityRepository {
         try {
             conn = dataSourceConfig.getConnection();
             PreparedStatement stmt = conn.prepareStatement(sql);
-            stmt.setObject(1, UUID.fromString(id));
+            stmt.setString(1, id);
             ResultSet rs = stmt.executeQuery();
             
             Collectivity collectivity = null;

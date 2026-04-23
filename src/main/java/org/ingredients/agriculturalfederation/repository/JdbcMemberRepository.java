@@ -10,7 +10,6 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 @Repository
 public class JdbcMemberRepository implements MemberRepository {
@@ -28,7 +27,7 @@ public class JdbcMemberRepository implements MemberRepository {
         try {
             conn = dataSourceConfig.getConnection();
             PreparedStatement stmt = conn.prepareStatement(sql);
-            stmt.setObject(1, UUID.fromString(member.getId()));
+            stmt.setString(1, member.getId());
             stmt.setString(2, member.getFirstName());
             stmt.setString(3, member.getLastName());
             stmt.setDate(4, Date.valueOf(member.getBirthDate()));
@@ -54,8 +53,8 @@ public class JdbcMemberRepository implements MemberRepository {
         try {
             conn = dataSourceConfig.getConnection();
             PreparedStatement stmt = conn.prepareStatement(sql);
-            stmt.setObject(1, UUID.fromString(collectivityId));
-            stmt.setObject(2, UUID.fromString(memberId));
+            stmt.setString(1, collectivityId);
+            stmt.setString(2, memberId);
             stmt.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException("Error updating member collectivity_id", e);
@@ -72,7 +71,7 @@ public class JdbcMemberRepository implements MemberRepository {
         try {
             conn = dataSourceConfig.getConnection();
             PreparedStatement stmt = conn.prepareStatement(sql);
-            stmt.setObject(1, UUID.fromString(memberId));
+            stmt.setString(1, memberId);
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
                 refereeIds.add(rs.getObject("referee_id").toString());
@@ -92,7 +91,7 @@ public class JdbcMemberRepository implements MemberRepository {
         try {
             conn = dataSourceConfig.getConnection();
             PreparedStatement stmt = conn.prepareStatement(sql);
-            stmt.setObject(1, UUID.fromString(id));
+            stmt.setString(1, id);
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
                 return Optional.of(mapResultSetToMember(rs));
@@ -122,7 +121,7 @@ public class JdbcMemberRepository implements MemberRepository {
             conn = dataSourceConfig.getConnection();
             PreparedStatement stmt = conn.prepareStatement(sql.toString());
             for (int i = 0; i < ids.size(); i++) {
-                stmt.setObject(i + 1, UUID.fromString(ids.get(i)));
+                stmt.setString(i + 1, ids.get(i));
             }
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
@@ -144,8 +143,8 @@ public class JdbcMemberRepository implements MemberRepository {
             conn = dataSourceConfig.getConnection();
             PreparedStatement stmt = conn.prepareStatement(sql);
             for (String refId : refereeIds) {
-                stmt.setObject(1, UUID.fromString(memberId));
-                stmt.setObject(2, UUID.fromString(refId));
+                stmt.setString(1, memberId);
+                stmt.setString(2, refId);
                 stmt.addBatch();
             }
             stmt.executeBatch();
