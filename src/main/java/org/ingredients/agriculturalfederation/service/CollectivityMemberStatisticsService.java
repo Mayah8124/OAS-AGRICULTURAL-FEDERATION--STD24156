@@ -2,9 +2,7 @@ package org.ingredients.agriculturalfederation.service;
 
 import org.ingredients.agriculturalfederation.dto.response.MemberPaymentResponse;
 import org.ingredients.agriculturalfederation.entity.*;
-import org.ingredients.agriculturalfederation.repository.CollectivityRepository;
-import org.ingredients.agriculturalfederation.repository.MemberPaymentRepository;
-import org.ingredients.agriculturalfederation.repository.MembershipFeeRepository;
+import org.ingredients.agriculturalfederation.repository.*;
 import org.ingredients.agriculturalfederation.validator.exception.CollectivityNotFoundException;
 import org.ingredients.agriculturalfederation.validator.exception.InvalidCollectivityException;
 import org.springframework.stereotype.Service;
@@ -20,15 +18,18 @@ public class CollectivityMemberStatisticsService {
     private final CollectivityRepository collectivityRepository;
     private final MembershipFeeRepository membershipFeeRepository;
     private final MemberPaymentRepository memberPaymentRepository;
+    private final CollectivityActivityAttendanceRepository activityAttendanceRepository;
 
     public CollectivityMemberStatisticsService(
             CollectivityRepository collectivityRepository,
             MembershipFeeRepository membershipFeeRepository,
-            MemberPaymentRepository memberPaymentRepository
+            MemberPaymentRepository memberPaymentRepository,
+            CollectivityActivityAttendanceRepository activityAttendanceRepository
     ) {
         this.collectivityRepository = collectivityRepository;
         this.membershipFeeRepository = membershipFeeRepository;
         this.memberPaymentRepository = memberPaymentRepository;
+        this.activityAttendanceRepository = activityAttendanceRepository;
     }
 
     public List<CollectivityLocalStatistics> getCollectivityStatistics(String id, LocalDate from, LocalDate to) {
@@ -37,6 +38,8 @@ public class CollectivityMemberStatisticsService {
 
         List<MembershipFee> activeFees = membershipFeeRepository.findActiveByCollectivityId(id);
         List<CollectivityLocalStatistics> statistics = new ArrayList<>();
+
+        List<ActivityAttendanceCount> attendanceStats = activityAttendanceRepository.getMemberAttendanceStats(id, from, to);
 
         for (Member member : collectivity.getMembers()) {
             MemberDescription desc = new MemberDescription(member.getId(), member.getFirstName(), member.getLastName(), member.getEmail());
@@ -50,7 +53,13 @@ public class CollectivityMemberStatisticsService {
                 }
             }
 
-            statistics.add(new CollectivityLocalStatistics(desc, earned, Math.max(0.0, unpaid - earned)));
+            double attendanceRate = attendanceStats.stream()
+                    .filter(stat -> stat.getMemberId().equals(member.getId()))
+                    .findFirst()
+                    .map(ActivityAttendanceCount::getAttendanceRate)
+                    .orElse(0.0);
+
+            statistics.add(new CollectivityLocalStatistics(desc, earned, Math.max(0.0, unpaid - earned), attendanceRate));
         }
 
         return statistics;
