@@ -1,6 +1,7 @@
 package org.ingredients.agriculturalfederation.repository;
 
 import org.ingredients.agriculturalfederation.config.DataSourceConfig;
+import org.ingredients.agriculturalfederation.dto.request.CreateActivityMemberAttendance;
 import org.ingredients.agriculturalfederation.dto.response.ActivityMemberAttendance;
 import org.ingredients.agriculturalfederation.dto.response.MemberDescription;
 import org.ingredients.agriculturalfederation.entity.AttendanceStatus;
@@ -101,7 +102,6 @@ public class JdbcActivityAttendanceRepository implements ActivityAttendanceRepos
                         String attendanceStatusStr = rs.getString("attendance_status");
                         String activityOccupation = rs.getString("activity_occupation");
                         
-                        // Determine attendance status based on business rules
                         AttendanceStatus attendanceStatus = determineAttendanceStatus(
                             attendanceStatusStr, 
                             occupation, 
@@ -140,7 +140,6 @@ public class JdbcActivityAttendanceRepository implements ActivityAttendanceRepos
                                                        String memberOccupation,
                                                        String activityOccupation,
                                                        String collectivityId) {
-        // Parse existing attendance status
         AttendanceStatus existingStatus = null;
         if (attendanceStatusStr != null) {
             try {
@@ -150,12 +149,9 @@ public class JdbcActivityAttendanceRepository implements ActivityAttendanceRepos
             }
         }
         
-        // If member is outside collectivity or not concerned by activity occupation, only ATTENDED is possible
         if (activityOccupation == null || !isMemberConcerned(memberOccupation, activityOccupation)) {
             return existingStatus == AttendanceStatus.ATTENDED ? AttendanceStatus.ATTENDED : AttendanceStatus.UNDEFINED;
         }
-        
-        // For concerned members inside collectivity, return existing status or UNDEFINED
         return existingStatus != null ? existingStatus : AttendanceStatus.UNDEFINED;
     }
 
@@ -170,6 +166,91 @@ public class JdbcActivityAttendanceRepository implements ActivityAttendanceRepos
             return memberOcc == activityOcc;
         } catch (IllegalArgumentException e) {
             return false;
+        }
+    }
+
+    @Override
+    public List<ActivityMemberAttendance> createAttendance(String collectivityId, String activityId, List<CreateActivityMemberAttendance> requests) {
+        if (requests == null || requests.isEmpty()) {
+            return List.of();
+        }
+
+        String sqlCheckExisting = "SELECT attendance_status FROM activity_attendance WHERE activity_id = ? AND member_id = ?";
+        String sqlInsert = "INSERT INTO activity_attendance (activity_id, member_id, attendance_status) VALUES (?, ?, ?)";
+        String sqlGetMemberInfo = "SELECT id, first_name, last_name, email, occupation FROM member WHERE id = ?";
+
+        Connection connection = null;
+        try {
+            connection = dataSourceConfig.getConnection();
+            connection.setAutoCommit(false);
+
+            List<ActivityMemberAttendance> createdAttendance = new ArrayList<>();
+
+            for (CreateActivityMemberAttendance request : requests) {
+                try (PreparedStatement stmtCheck = connection.prepareStatement(sqlCheckExisting)) {
+                    stmtCheck.setString(1, activityId);
+                    stmtCheck.setString(2, request.getMemberIdentifier());
+                    try (ResultSet rs = stmtCheck.executeQuery()) {
+                        if (rs.next()) {
+                            String existingStatus = rs.getString("attendance_status");
+                            if (!"UNDEFINED".equals(existingStatus)) {
+                                throw new IllegalArgumentException("Attendance for member " + request.getMemberIdentifier() + 
+                                        " is already confirmed and cannot be modified");
+                            }
+                        }
+                    }
+                }
+
+                try (PreparedStatement stmtInsert = connection.prepareStatement(sqlInsert)) {
+                    stmtInsert.setString(1, activityId);
+                    stmtInsert.setString(2, request.getMemberIdentifier());
+                    stmtInsert.setString(3, request.getAttendanceStatus().name());
+                    stmtInsert.executeUpdate();
+                }
+
+                try (PreparedStatement stmtMember = connection.prepareStatement(sqlGetMemberInfo)) {
+                    stmtMember.setString(1, request.getMemberIdentifier());
+                    try (ResultSet rs = stmtMember.executeQuery()) {
+                        if (rs.next()) {
+                            MemberDescription memberDescription = MemberDescription.builder()
+                                    .id(rs.getString("id"))
+                                    .firstName(rs.getString("first_name"))
+                                    .lastName(rs.getString("last_name"))
+                                    .email(rs.getString("email"))
+                                    .occupation(rs.getString("occupation"))
+                                    .build();
+
+                            ActivityMemberAttendance attendance = ActivityMemberAttendance.builder()
+                                    .id(request.getMemberIdentifier() + "_" + activityId)
+                                    .memberDescription(memberDescription)
+                                    .attendanceStatus(request.getAttendanceStatus())
+                                    .build();
+
+                            createdAttendance.add(attendance);
+                        }
+                    }
+                }
+            }
+
+            connection.commit();
+            return createdAttendance;
+
+        } catch (SQLException e) {
+            if (connection != null) {
+                try {
+                    connection.rollback();
+                } catch (SQLException ex) {
+                }
+            }
+            throw new RuntimeException("Error creating activity attendance", e);
+        } finally {
+            if (connection != null) {
+                try {
+                    connection.setAutoCommit(true);
+                } catch (SQLException e) {
+                }
+                dataSourceConfig.closeConnection(connection);
+            }
         }
     }
 }

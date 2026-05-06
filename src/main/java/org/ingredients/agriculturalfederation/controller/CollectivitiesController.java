@@ -2,6 +2,7 @@ package org.ingredients.agriculturalfederation.controller;
 
 import org.ingredients.agriculturalfederation.dto.request.CollectivityInformationRequest;
 import org.ingredients.agriculturalfederation.dto.request.CreateCollectivityRequest;
+import org.ingredients.agriculturalfederation.dto.request.CreateActivityMemberAttendance;
 import org.ingredients.agriculturalfederation.dto.request.CreateMembershipFeeRequest;
 import org.ingredients.agriculturalfederation.entity.Collectivity;
 import org.ingredients.agriculturalfederation.entity.CollectivityActivity;
@@ -86,6 +87,15 @@ public class CollectivitiesController {
             @PathVariable String activityId
     ) {
         return ResponseEntity.status(HttpStatus.OK).body(activityAttendanceService.getActivityAttendance(id, activityId));
+    }
+
+    @PostMapping("/collectivities/{id}/activities/{activityId}/attendance")
+    public ResponseEntity<List<ActivityMemberAttendance>> createActivityAttendance(
+            @PathVariable String id,
+            @PathVariable String activityId,
+            @RequestBody List<CreateActivityMemberAttendance> requests
+    ) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(activityAttendanceService.createAttendance(id, activityId, requests));
     }
 
     @GetMapping("/collectivities/{id}/financialAccounts")

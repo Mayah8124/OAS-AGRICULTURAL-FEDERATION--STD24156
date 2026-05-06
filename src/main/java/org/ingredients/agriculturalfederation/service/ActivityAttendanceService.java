@@ -1,5 +1,6 @@
 package org.ingredients.agriculturalfederation.service;
 
+import org.ingredients.agriculturalfederation.dto.request.CreateActivityMemberAttendance;
 import org.ingredients.agriculturalfederation.dto.response.ActivityMemberAttendance;
 import org.ingredients.agriculturalfederation.repository.ActivityAttendanceRepository;
 import org.ingredients.agriculturalfederation.validator.ActivityAttendanceValidator;
@@ -22,5 +23,11 @@ public class ActivityAttendanceService {
         activityAttendanceValidator.validateGetActivityAttendance(collectivityId, activityId);
         
         return activityAttendanceRepository.getActivityAttendance(collectivityId, activityId);
+    }
+
+    public List<ActivityMemberAttendance> createAttendance(String collectivityId, String activityId, List<CreateActivityMemberAttendance> requests) {
+        activityAttendanceValidator.validateCreateAttendance(collectivityId, activityId, requests);
+        
+        return activityAttendanceRepository.createAttendance(collectivityId, activityId, requests);
     }
 }
