@@ -1,21 +1,35 @@
-begin;
+rollback;
 
-truncate table
-    member_payment,
-    collectivity_transaction,
-    financial_account_balance,
-    collectivity_financial_account,
-    collectivity_structure,
-    collectivity_member,
-    member_referee,
-    member,
-    membership_fee,
-    mobile_banking_account,
-    bank_account,
-    cash_account,
-    financial_account,
-    collectivity
-    restart identity cascade;
+set search_path to public;
+
+do $$
+begin
+    begin
+        if exists (select 1 from information_schema.tables where table_schema = 'public' and table_name = 'member_payment') then
+            truncate table
+                member_payment,
+                collectivity_transaction,
+                financial_account_balance,
+                collectivity_financial_account,
+                activity_member_attendance,
+                collectivity_activity_occupation,
+                collectivity_activity,
+                collectivity_structure,
+                collectivity_member,
+                member_referee,
+                member,
+                membership_fee,
+                mobile_banking_account,
+                bank_account,
+                cash_account,
+                financial_account,
+                collectivity
+            restart identity cascade;
+        end if;
+    exception when undefined_table then
+        null;
+    end;
+end $$;
 
 insert into collectivity (id, location, federation_approval, name, number)
 values
@@ -101,29 +115,53 @@ values
     ('col-3', 'C3-A-CASH')
 on conflict do nothing;
 
-insert into member_payment (id, member_id, membership_fee_id, account_credited_id, amount, payment_mode, creation_date)
+do $$
+begin
+    if exists (select 1 from information_schema.tables where table_schema = 'public' and table_name = 'member_payment') then
+        insert into member_payment (id, member_id, membership_fee_id, account_credited_id, amount, payment_mode, creation_date)
+        values
+            ('P-C1-M1-20260101', 'C1-M1', 'cot-1', 'C1-A-CASH', 100000, 'CASH', '2026-01-01'),
+            ('P-C1-M2-20260101', 'C1-M2', 'cot-1', 'C1-A-CASH', 100000, 'CASH', '2026-01-01'),
+            ('P-C1-M3-20260101', 'C1-M3', 'cot-1', 'C1-A-CASH', 100000, 'CASH', '2026-01-01'),
+            ('P-C1-M4-20260101', 'C1-M4', 'cot-1', 'C1-A-CASH', 100000, 'CASH', '2026-01-01'),
+            ('P-C1-M5-20260101', 'C1-M5', 'cot-1', 'C1-A-CASH', 100000, 'CASH', '2026-01-01'),
+            ('P-C1-M6-20260101', 'C1-M6', 'cot-1', 'C1-A-CASH', 100000, 'CASH', '2026-01-01'),
+            ('P-C1-M7-20260101', 'C1-M7', 'cot-1', 'C1-A-CASH',  60000, 'CASH', '2026-01-01'),
+            ('P-C1-M8-20260101', 'C1-M8', 'cot-1', 'C1-A-CASH',  90000, 'CASH', '2026-01-01')
+        on conflict (id) do nothing;
+    end if;
+end $$;
+
+do $$
+begin
+    if exists (select 1 from information_schema.tables where table_schema = 'public' and table_name = 'collectivity_transaction') then
+        insert into collectivity_transaction (id, collectivity_id, member_debited_id, account_credited_id, amount, payment_mode, creation_date)
+        values
+            ('T-C1-M1-20260101', 'col-1', 'C1-M1', 'C1-A-CASH', 100000, 'CASH', '2026-01-01'),
+            ('T-C1-M2-20260101', 'col-1', 'C1-M2', 'C1-A-CASH', 100000, 'CASH', '2026-01-01'),
+            ('T-C1-M3-20260101', 'col-1', 'C1-M3', 'C1-A-CASH', 100000, 'CASH', '2026-01-01'),
+            ('T-C1-M4-20260101', 'col-1', 'C1-M4', 'C1-A-CASH', 100000, 'CASH', '2026-01-01'),
+            ('T-C1-M5-20260101', 'col-1', 'C1-M5', 'C1-A-CASH', 100000, 'CASH', '2026-01-01'),
+            ('T-C1-M6-20260101', 'col-1', 'C1-M6', 'C1-A-CASH', 100000, 'CASH', '2026-01-01'),
+            ('T-C1-M7-20260101', 'col-1', 'C1-M7', 'C1-A-CASH',  60000, 'CASH', '2026-01-01'),
+            ('T-C1-M8-20260101', 'col-1', 'C1-M8', 'C1-A-CASH',  90000, 'CASH', '2026-01-01')
+        on conflict (id) do nothing;
+    end if;
+end $$;
+
+insert into collectivity_activity (id, collectivity_id, label, activity_type, executive_date, recurrence_week_ordinal, recurrence_day_of_week)
 values
-    ('P-C1-M1-20260101', 'C1-M1', 'cot-1', 'C1-A-CASH', 100000, 'CASH', '2026-01-01'),
-    ('P-C1-M2-20260101', 'C1-M2', 'cot-1', 'C1-A-CASH', 100000, 'CASH', '2026-01-01'),
-    ('P-C1-M3-20260101', 'C1-M3', 'cot-1', 'C1-A-CASH', 100000, 'CASH', '2026-01-01'),
-    ('P-C1-M4-20260101', 'C1-M4', 'cot-1', 'C1-A-CASH', 100000, 'CASH', '2026-01-01'),
-    ('P-C1-M5-20260101', 'C1-M5', 'cot-1', 'C1-A-CASH', 100000, 'CASH', '2026-01-01'),
-    ('P-C1-M6-20260101', 'C1-M6', 'cot-1', 'C1-A-CASH', 100000, 'CASH', '2026-01-01'),
-    ('P-C1-M7-20260101', 'C1-M7', 'cot-1', 'C1-A-CASH',  60000, 'CASH', '2026-01-01'),
-    ('P-C1-M8-20260101', 'C1-M8', 'cot-1', 'C1-A-CASH',  90000, 'CASH', '2026-01-01')
+    ('C1-ACT-1', 'col-1', 'Réunion hebdomadaire', 'MEETING', null, 1, 'MO'),
+    ('C1-ACT-2', 'col-1', 'Formation compost', 'TRAINING', '2026-01-15', null, null)
 on conflict (id) do nothing;
 
-insert into collectivity_transaction (id, collectivity_id, member_debited_id, account_credited_id, amount, payment_mode, creation_date)
+insert into collectivity_activity_occupation (activity_id, member_occupation)
 values
-    ('T-C1-M1-20260101', 'col-1', 'C1-M1', 'C1-A-CASH', 100000, 'CASH', '2026-01-01'),
-    ('T-C1-M2-20260101', 'col-1', 'C1-M2', 'C1-A-CASH', 100000, 'CASH', '2026-01-01'),
-    ('T-C1-M3-20260101', 'col-1', 'C1-M3', 'C1-A-CASH', 100000, 'CASH', '2026-01-01'),
-    ('T-C1-M4-20260101', 'col-1', 'C1-M4', 'C1-A-CASH', 100000, 'CASH', '2026-01-01'),
-    ('T-C1-M5-20260101', 'col-1', 'C1-M5', 'C1-A-CASH', 100000, 'CASH', '2026-01-01'),
-    ('T-C1-M6-20260101', 'col-1', 'C1-M6', 'C1-A-CASH', 100000, 'CASH', '2026-01-01'),
-    ('T-C1-M7-20260101', 'col-1', 'C1-M7', 'C1-A-CASH',  60000, 'CASH', '2026-01-01'),
-    ('T-C1-M8-20260101', 'col-1', 'C1-M8', 'C1-A-CASH',  90000, 'CASH', '2026-01-01')
-on conflict (id) do nothing;
+    ('C1-ACT-1', 'PRESIDENT'),
+    ('C1-ACT-1', 'VICE_PRESIDENT'),
+    ('C1-ACT-1', 'TREASURER'),
+    ('C1-ACT-1', 'SECRETARY')
+on conflict do nothing;
 
 insert into financial_account_balance (financial_account_id, at_date, amount)
 values
@@ -133,5 +171,3 @@ values
     ('C2-A-MOBILE-1', '2026-01-01', 0),
     ('C3-A-CASH', '2026-01-01', 0)
 on conflict (financial_account_id, at_date) do update set amount = excluded.amount;
-
-commit;

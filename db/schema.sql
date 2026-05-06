@@ -112,6 +112,30 @@ create table if not exists collectivity_transaction (
     creation_date date
 );
 
+create table if not exists collectivity_activity (
+    id varchar(50) primary key,
+    collectivity_id varchar(50) not null references collectivity(id),
+    label text not null,
+    activity_type text not null,
+    executive_date date,
+    recurrence_week_ordinal integer,
+    recurrence_day_of_week text
+);
+
+create table if not exists collectivity_activity_occupation (
+    activity_id varchar(50) not null references collectivity_activity(id) on delete cascade,
+    member_occupation text not null,
+    primary key (activity_id, member_occupation)
+);
+
+create table if not exists activity_member_attendance (
+    id varchar(50) primary key,
+    activity_id varchar(50) not null references collectivity_activity(id) on delete cascade,
+    member_id varchar(50) not null references member(id),
+    attendance_status text not null,
+    unique (activity_id, member_id)
+);
+
 create index if not exists idx_membership_fee_collectivity_id on membership_fee(collectivity_id);
 create index if not exists idx_member_payment_member_id on member_payment(member_id);
 create index if not exists idx_member_payment_membership_fee_id on member_payment(membership_fee_id);
@@ -121,3 +145,5 @@ create index if not exists idx_collectivity_financial_account_collectivity_id on
 create index if not exists idx_collectivity_financial_account_financial_account_id on collectivity_financial_account(financial_account_id);
 create index if not exists idx_collectivity_transaction_collectivity_id on collectivity_transaction(collectivity_id);
 create index if not exists idx_collectivity_transaction_creation_date on collectivity_transaction(creation_date);
+create index if not exists idx_collectivity_activity_collectivity_id on collectivity_activity(collectivity_id);
+create index if not exists idx_activity_member_attendance_activity_id on activity_member_attendance(activity_id);
