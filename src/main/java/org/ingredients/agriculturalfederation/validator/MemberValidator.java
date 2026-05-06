@@ -116,15 +116,15 @@ public class MemberValidator {
     private boolean memberExists(String memberId) {
         String sql = "SELECT 1 FROM member WHERE id = ? LIMIT 1";
         Connection connection = null;
-        
+
         try {
             connection = dataSourceConfig.getConnection();
             PreparedStatement statement = connection.prepareStatement(sql);
             statement.setString(1, memberId);
             ResultSet resultSet = statement.executeQuery();
-            
+
             return resultSet.next();
-            
+
         } catch (SQLException e) {
             throw new ValidationException("Error checking member existence", e);
         } finally {
@@ -135,15 +135,15 @@ public class MemberValidator {
     private boolean collectivityExists(String collectivityId) {
         String sql = "SELECT 1 FROM collectivity WHERE id = ? LIMIT 1";
         Connection connection = null;
-        
+
         try {
             connection = dataSourceConfig.getConnection();
             PreparedStatement statement = connection.prepareStatement(sql);
             statement.setString(1, collectivityId);
             ResultSet resultSet = statement.executeQuery();
-            
+
             return resultSet.next();
-            
+
         } catch (SQLException e) {
             throw new ValidationException("Error checking collectivity existence", e);
         } finally {

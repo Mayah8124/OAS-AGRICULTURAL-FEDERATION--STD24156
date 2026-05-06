@@ -119,6 +119,10 @@ public class JdbcMemberPaymentRepository implements MemberPaymentRepository {
 
     @Override
     public List<MemberPaymentResponse> findByMemberIdAndDateRange(String memberId, LocalDate from, LocalDate to) {
+        if (memberId == null || memberId.trim().isEmpty() || from == null || to == null) {
+            return List.of();
+        }
+
         String sql = """
                         SELECT id, amount, payment_mode, account_credited_id, creation_date 
                         FROM member_payment 
@@ -127,35 +131,59 @@ public class JdbcMemberPaymentRepository implements MemberPaymentRepository {
                 """;
 
         List<MemberPaymentResponse> payments = new ArrayList<>();
-        Connection conn = null;
 
-        try {
-            conn = dataSourceConfig.getConnection();
-            PreparedStatement stmt = conn.prepareStatement(sql);
+        try (Connection conn = dataSourceConfig.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, memberId);
             stmt.setDate(2, Date.valueOf(from));
             stmt.setDate(3, Date.valueOf(to));
-            ResultSet rs = stmt.executeQuery();
 
-            while (rs.next()) {
-                MemberPaymentResponse payment = new MemberPaymentResponse();
-                payment.setId(rs.getString("id"));
-                payment.setAmount(rs.getBigDecimal("amount"));
-                payment.setPaymentMode(rs.getString("payment_mode"));
-                payment.setCreationDate(rs.getDate("creation_date").toLocalDate());
-                
-                AccountCreditedResponse accountCredited = new AccountCreditedResponse();
-                accountCredited.setId(rs.getString("account_credited_id"));
-                payment.setAccountCredited(accountCredited);
-                
-                payments.add(payment);
+            try (ResultSet rs = stmt.executeQuery()) {
+
+                while (rs.next()) {
+                    MemberPaymentResponse payment = new MemberPaymentResponse();
+                    payment.setId(rs.getString("id"));
+                    payment.setAmount(rs.getBigDecimal("amount"));
+                    payment.setPaymentMode(rs.getString("payment_mode"));
+                    payment.setCreationDate(rs.getDate("creation_date").toLocalDate());
+
+                    AccountCreditedResponse accountCredited = new AccountCreditedResponse();
+                    accountCredited.setId(rs.getString("account_credited_id"));
+                    payment.setAccountCredited(accountCredited);
+
+                    payments.add(payment);
+                }
             }
         } catch (SQLException e) {
             throw new RuntimeException("Error finding member payments in date range", e);
-        } finally {
-            dataSourceConfig.closeConnection(conn);
         }
 
         return payments;
+    }
+
+    @Override
+    public double findTotalEarnedByMemberIdAndDateRange(String memberId, LocalDate from, LocalDate to) {
+        if (memberId == null || memberId.trim().isEmpty() || from == null || to == null) {
+            return 0.0;
+        }
+
+        String sql = "SELECT SUM(amount) FROM member_payment WHERE member_id = ? AND creation_date BETWEEN ? AND ?";
+
+        try (Connection conn = dataSourceConfig.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, memberId);
+            stmt.setDate(2, Date.valueOf(from));
+            stmt.setDate(3, Date.valueOf(to));
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    BigDecimal sum = rs.getBigDecimal(1);
+                    return sum != null ? sum.doubleValue() : 0.0;
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error calculating total earned for member", e);
+        }
+        return 0.0;
     }
 }

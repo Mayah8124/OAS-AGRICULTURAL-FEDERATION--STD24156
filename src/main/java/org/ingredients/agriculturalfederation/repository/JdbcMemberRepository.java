@@ -106,12 +106,15 @@ public class JdbcMemberRepository implements MemberRepository {
 
     @Override
     public List<Member> findAllById(List<String> ids) {
-        if (ids == null || ids.isEmpty()) return List.of();
-        
-        StringBuilder sql = new StringBuilder("SELECT id, first_name, last_name, birth_date, gender, address, profession, phone_number, email, occupation FROM member WHERE id IN (");
+        if (ids == null || ids.isEmpty())
+            return List.of();
+
+        StringBuilder sql = new StringBuilder(
+                "SELECT id, first_name, last_name, birth_date, gender, address, profession, phone_number, email, occupation FROM member WHERE id IN (");
         for (int i = 0; i < ids.size(); i++) {
             sql.append("?");
-            if (i < ids.size() - 1) sql.append(",");
+            if (i < ids.size() - 1)
+                sql.append(",");
         }
         sql.append(")");
 

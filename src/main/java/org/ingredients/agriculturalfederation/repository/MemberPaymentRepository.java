@@ -9,4 +9,5 @@ import java.util.List;
 public interface MemberPaymentRepository {
     List<MemberPaymentResponse> createPayments(String memberId, String collectivityId, List<CreateMemberPaymentRequest> requests);
     List<MemberPaymentResponse> findByMemberIdAndDateRange(String memberId, LocalDate from, LocalDate to);
+    double findTotalEarnedByMemberIdAndDateRange(String memberId, LocalDate from, LocalDate to);
 }

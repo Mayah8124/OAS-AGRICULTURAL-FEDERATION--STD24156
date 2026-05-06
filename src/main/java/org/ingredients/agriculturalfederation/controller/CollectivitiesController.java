@@ -3,12 +3,15 @@ package org.ingredients.agriculturalfederation.controller;
 import org.ingredients.agriculturalfederation.dto.request.CollectivityInformationRequest;
 import org.ingredients.agriculturalfederation.dto.request.CreateCollectivityRequest;
 import org.ingredients.agriculturalfederation.dto.request.CreateMembershipFeeRequest;
+import org.ingredients.agriculturalfederation.dto.response.CollectivityStatisticsResponse;
 import org.ingredients.agriculturalfederation.entity.Collectivity;
 import org.ingredients.agriculturalfederation.entity.CollectivityLocalStatistics;
 import org.ingredients.agriculturalfederation.entity.FinancialAccount;
 import org.ingredients.agriculturalfederation.entity.MembershipFee;
 import org.ingredients.agriculturalfederation.dto.response.MembershipFeeResponse;
 import org.ingredients.agriculturalfederation.service.CollectivityService;
+import org.ingredients.agriculturalfederation.service.CollectivityStatisticsService;
+import org.ingredients.agriculturalfederation.service.CollectivityMemberStatisticsService;
 import org.ingredients.agriculturalfederation.service.FinancialAccountService;
 import org.ingredients.agriculturalfederation.service.MembershipFeeService;
 import org.ingredients.agriculturalfederation.validator.GetCollectivityValidator;
@@ -25,12 +28,23 @@ import java.util.List;
 public class CollectivitiesController {
 
     private final CollectivityService collectivityService;
+    private final CollectivityStatisticsService collectivityStatisticsService;
+    private final CollectivityMemberStatisticsService collectivityMemberStatisticsService;
     private final MembershipFeeService membershipFeeService;
     private final GetCollectivityValidator getCollectivityValidator;
     private final FinancialAccountService financialAccountService;
 
-    public CollectivitiesController(CollectivityService collectivityService, MembershipFeeService membershipFeeService, GetCollectivityValidator getCollectivityValidator, FinancialAccountService financialAccountService) {
+    public CollectivitiesController(
+            CollectivityService collectivityService,
+            CollectivityStatisticsService collectivityStatisticsService,
+            CollectivityMemberStatisticsService collectivityMemberStatisticsService,
+            MembershipFeeService membershipFeeService,
+            GetCollectivityValidator getCollectivityValidator,
+            FinancialAccountService financialAccountService
+    ) {
         this.collectivityService = collectivityService;
+        this.collectivityStatisticsService = collectivityStatisticsService;
+        this.collectivityMemberStatisticsService = collectivityMemberStatisticsService;
         this.membershipFeeService = membershipFeeService;
         this.getCollectivityValidator = getCollectivityValidator;
         this.financialAccountService = financialAccountService;
@@ -96,6 +110,30 @@ public class CollectivitiesController {
         }
     }
 
+    @GetMapping("/collectivities/statistics")
+    public ResponseEntity<CollectivityStatisticsResponse> getCollectivitiesStatistics(
+            @RequestParam(value = "from", required = false) String from,
+            @RequestParam(value = "to", required = false) String to
+    ) {
+        LocalDate parsedFrom;
+        LocalDate parsedTo;
+        try {
+            parsedFrom = from == null || from.trim().isEmpty() ? null : LocalDate.parse(from);
+            parsedTo = to == null || to.trim().isEmpty() ? null : LocalDate.parse(to);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
+
+        try {
+            return ResponseEntity.status(HttpStatus.OK).body(collectivityStatisticsService.getCollectivitiesStatistics(parsedFrom, parsedTo));
+        } catch (IllegalArgumentException e) {
+            if (e.getMessage() != null && e.getMessage().toLowerCase().contains("not found")) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            }
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
+    }
+
     @GetMapping("/collectivities/{id}/statistics")
     public ResponseEntity<List<CollectivityLocalStatistics>> getCollectivityStatistics(
             @PathVariable String id,
@@ -119,7 +157,7 @@ public class CollectivitiesController {
         }
 
         try {
-            List<CollectivityLocalStatistics> statistics = collectivityService.getCollectivityStatistics(id, parsedFrom, parsedTo);
+            List<CollectivityLocalStatistics> statistics = collectivityMemberStatisticsService.getCollectivityStatistics(id, parsedFrom, parsedTo);
             return ResponseEntity.status(HttpStatus.OK).body(statistics);
         } catch (IllegalArgumentException e) {
             if (e.getMessage() != null && e.getMessage().toLowerCase().contains("not found")) {
@@ -129,13 +167,4 @@ public class CollectivitiesController {
         }
     }
 
-    @ExceptionHandler(CollectivityNotFoundException.class)
-    public ResponseEntity<String> handleCollectivityNotFoundException(CollectivityNotFoundException e) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-    }
-
-    @ExceptionHandler(InvalidCollectivityException.class)
-    public ResponseEntity<String> handleInvalidCollectivityException(InvalidCollectivityException e) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-    }
 }

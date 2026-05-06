@@ -74,7 +74,7 @@ public class JdbcMembershipFeeRepository implements MembershipFeeRepository {
     @Override
     public List<MembershipFee> findByCollectivityId(String collectivityId) {
         String sql = """
-                        SELECT id, eligible_from, frequency, amount, label, status 
+                        SELECT id, eligible_from, frequency, amount, label, status
                         FROM membership_fee WHERE collectivity_id = ?
                 """;
 
@@ -110,8 +110,8 @@ public class JdbcMembershipFeeRepository implements MembershipFeeRepository {
     @Override
     public List<MembershipFee> findActiveByCollectivityId(String collectivityId) {
         String sql = """
-                        SELECT id, eligible_from, frequency, amount, label, status 
-                        FROM membership_fee 
+                        SELECT id, eligible_from, frequency, amount, label, status
+                        FROM membership_fee
                         WHERE collectivity_id = ? AND status = 'ACTIVE'
                 """;
 
@@ -147,9 +147,9 @@ public class JdbcMembershipFeeRepository implements MembershipFeeRepository {
     @Override
     public void save(MembershipFee membershipFee) {
         String sql = """
-                        INSERT INTO membership_fee (id, eligible_from, frequency, amount, label, status, collectivity_id) 
-                        VALUES (?, ?, ?, ?, ?, ?, ?)
-                     """;
+                   INSERT INTO membership_fee (id, eligible_from, frequency, amount, label, status, collectivity_id)
+                   VALUES (?, ?, ?, ?, ?, ?, ?)
+                """;
 
         Connection conn = null;
         try {
