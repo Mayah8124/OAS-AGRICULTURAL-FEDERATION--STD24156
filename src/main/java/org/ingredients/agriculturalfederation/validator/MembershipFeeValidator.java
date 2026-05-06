@@ -12,7 +12,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
-import java.util.UUID;
 
 @Component
 public class MembershipFeeValidator {
@@ -60,7 +59,7 @@ public class MembershipFeeValidator {
         try {
             connection = dataSourceConfig.getConnection();
             PreparedStatement statement = connection.prepareStatement(sql);
-            statement.setObject(1, UUID.fromString(collectivityId));
+            statement.setString(1, collectivityId);
             ResultSet resultSet = statement.executeQuery();
 
             if (!resultSet.next()) {
@@ -81,19 +80,6 @@ public class MembershipFeeValidator {
 
         if (collectivityId.trim().isEmpty()) {
             throw new IllegalArgumentException("Collectivity ID should not be empty");
-        }
-
-        if (!isValidUUID(collectivityId)) {
-            throw new IllegalArgumentException("The collectivity ID must be a valid UUID");
-        }
-    }
-
-    private boolean isValidUUID(String uuid) {
-        try {
-            java.util.UUID.fromString(uuid);
-            return true;
-        } catch (IllegalArgumentException e) {
-            return false;
         }
     }
 }

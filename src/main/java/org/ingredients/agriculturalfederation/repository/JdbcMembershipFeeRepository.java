@@ -9,7 +9,6 @@ import org.springframework.stereotype.Repository;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 @Repository
 public class JdbcMembershipFeeRepository implements MembershipFeeRepository {
@@ -34,12 +33,12 @@ public class JdbcMembershipFeeRepository implements MembershipFeeRepository {
 
             List<MembershipFee> out = new ArrayList<>();
             for (MembershipFee fee : fees) {
-                String id = UUID.randomUUID().toString();
+                String id = java.util.UUID.randomUUID().toString();
                 fee.setId(id);
 
                 try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-                    stmt.setObject(1, UUID.fromString(id));
-                    stmt.setObject(2, UUID.fromString(collectivityId));
+                    stmt.setString(1, id);
+                    stmt.setString(2, collectivityId);
 
                     if (fee.getEligibleFrom() == null) {
                         stmt.setNull(3, Types.DATE);
@@ -85,7 +84,7 @@ public class JdbcMembershipFeeRepository implements MembershipFeeRepository {
         try {
             conn = dataSourceConfig.getConnection();
             PreparedStatement stmt = conn.prepareStatement(sql);
-            stmt.setObject(1, UUID.fromString(collectivityId));
+            stmt.setString(1, collectivityId);
             ResultSet rs = stmt.executeQuery();
 
             while (rs.next()) {
@@ -120,13 +119,13 @@ public class JdbcMembershipFeeRepository implements MembershipFeeRepository {
             conn = dataSourceConfig.getConnection();
             PreparedStatement stmt = conn.prepareStatement(sql);
 
-            stmt.setObject(1, UUID.fromString(membershipFee.getId()));
+            stmt.setString(1, membershipFee.getId());
             stmt.setDate(2, Date.valueOf(membershipFee.getEligibleFrom()));
             stmt.setString(3, membershipFee.getFrequency().name());
             stmt.setBigDecimal(4, membershipFee.getAmount());
             stmt.setString(5, membershipFee.getLabel());
             stmt.setString(6, membershipFee.getStatus().name());
-            stmt.setObject(7, UUID.fromString(membershipFee.getCollectivityId()));
+            stmt.setString(7, membershipFee.getCollectivityId());
 
             stmt.executeUpdate();
         } catch (SQLException e) {

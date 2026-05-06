@@ -11,7 +11,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
-import java.util.UUID;
 
 @Component
 public class CollectivityValidator {
@@ -141,7 +140,7 @@ public class CollectivityValidator {
         try {
             connection = dataSourceConfig.getConnection();
             PreparedStatement statement = connection.prepareStatement(sql);
-            statement.setObject(1, UUID.fromString(memberId));
+            statement.setString(1, memberId);
             ResultSet resultSet = statement.executeQuery();
             
             return resultSet.next();
