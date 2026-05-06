@@ -4,6 +4,7 @@ import org.ingredients.agriculturalfederation.dto.request.CollectivityInformatio
 import org.ingredients.agriculturalfederation.dto.request.CreateCollectivityRequest;
 import org.ingredients.agriculturalfederation.dto.request.CreateMembershipFeeRequest;
 import org.ingredients.agriculturalfederation.entity.Collectivity;
+import org.ingredients.agriculturalfederation.entity.CollectivityLocalStatistics;
 import org.ingredients.agriculturalfederation.entity.FinancialAccount;
 import org.ingredients.agriculturalfederation.entity.MembershipFee;
 import org.ingredients.agriculturalfederation.dto.response.MembershipFeeResponse;
@@ -92,6 +93,39 @@ public class CollectivitiesController {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(msg);
             }
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(msg);
+        }
+    }
+
+    @GetMapping("/collectivities/{id}/statistics")
+    public ResponseEntity<List<CollectivityLocalStatistics>> getCollectivityStatistics(
+            @PathVariable String id,
+            @RequestParam("from") String from,
+            @RequestParam("to") String to
+    ) {
+        if (from == null || from.trim().isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
+        if (to == null || to.trim().isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
+
+        LocalDate parsedFrom;
+        LocalDate parsedTo;
+        try {
+            parsedFrom = LocalDate.parse(from);
+            parsedTo = LocalDate.parse(to);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
+
+        try {
+            List<CollectivityLocalStatistics> statistics = collectivityService.getCollectivityStatistics(id, parsedFrom, parsedTo);
+            return ResponseEntity.status(HttpStatus.OK).body(statistics);
+        } catch (IllegalArgumentException e) {
+            if (e.getMessage() != null && e.getMessage().toLowerCase().contains("not found")) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            }
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
     }
 

@@ -9,11 +9,7 @@ import org.ingredients.agriculturalfederation.entity.PaymentMode;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
-import java.sql.Connection;
-import java.sql.Date;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.sql.Types;
+import java.sql.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -119,5 +115,47 @@ public class JdbcMemberPaymentRepository implements MemberPaymentRepository {
                 dataSourceConfig.closeConnection(conn);
             }
         }
+    }
+
+    @Override
+    public List<MemberPaymentResponse> findByMemberIdAndDateRange(String memberId, LocalDate from, LocalDate to) {
+        String sql = """
+                        SELECT id, amount, payment_mode, account_credited_id, creation_date 
+                        FROM member_payment 
+                        WHERE member_id = ? AND creation_date BETWEEN ? AND ?
+                        ORDER BY creation_date
+                """;
+
+        List<MemberPaymentResponse> payments = new ArrayList<>();
+        Connection conn = null;
+
+        try {
+            conn = dataSourceConfig.getConnection();
+            PreparedStatement stmt = conn.prepareStatement(sql);
+            stmt.setString(1, memberId);
+            stmt.setDate(2, Date.valueOf(from));
+            stmt.setDate(3, Date.valueOf(to));
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                MemberPaymentResponse payment = new MemberPaymentResponse();
+                payment.setId(rs.getString("id"));
+                payment.setAmount(rs.getBigDecimal("amount"));
+                payment.setPaymentMode(rs.getString("payment_mode"));
+                payment.setCreationDate(rs.getDate("creation_date").toLocalDate());
+                
+                AccountCreditedResponse accountCredited = new AccountCreditedResponse();
+                accountCredited.setId(rs.getString("account_credited_id"));
+                payment.setAccountCredited(accountCredited);
+                
+                payments.add(payment);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error finding member payments in date range", e);
+        } finally {
+            dataSourceConfig.closeConnection(conn);
+        }
+
+        return payments;
     }
 }
