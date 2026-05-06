@@ -10,7 +10,8 @@ info:
     - v0.0.4 (2026-04-23) : GET /collectivities/{id} and  GET /collectivities/{id}/financialAccounts
     - v0.0.5 (2026-05-05) : Partial features collectivity statistics.
     - v0.0.6 (2026-05-05) : New features about collectivities activities and assiduity.
-  version: 0.0.6
+    - v0.0.7 (2026-05-05) : Adding assiduity data inside collectivity statistics.
+  version: 0.0.7
 servers:
   - url: 'https://localhost:8080'
 paths:
@@ -544,6 +545,8 @@ components:
           type: number
         unpaidAmount:
           type: number
+        assiduityPercentage:
+          type: number
     CollectivityOverallStatistics:
       type: object
       properties:
@@ -552,6 +555,8 @@ components:
         newMembersNumber:
           type: integer
         overallMemberCurrentDuePercentage:
+          type: number
+        overallMemberAssiduityPercentage:
           type: number
     MemberIdentifier:
       type: string
