@@ -71,4 +71,14 @@ public class CollectivityActivityValidator {
             }
         }
     }
+
+    public void validateCollectivityExists(String collectivityId) {
+        if (collectivityId == null || collectivityId.trim().isEmpty()) {
+            throw new InvalidCollectivityException("Collectivity identifier is required");
+        }
+
+        if (!collectivityActivityRepository.collectivityExists(collectivityId)) {
+            throw new CollectivityNotFoundException("Collectivity with ID " + collectivityId + " not found");
+        }
+    }
 }

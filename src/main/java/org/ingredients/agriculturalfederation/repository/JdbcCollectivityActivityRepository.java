@@ -136,4 +136,75 @@ public class JdbcCollectivityActivityRepository implements CollectivityActivityR
             }
         }
     }
+
+    @Override
+    public List<CollectivityActivity> getActivities(String collectivityId) {
+        String sql = """
+                        SELECT id, label, activity_type, executive_date, recurrence_week_ordinal, recurrence_day_of_week
+                        FROM collectivity_activity WHERE collectivity_id = ? ORDER BY executive_date, label
+                    """;
+
+        String sqlOccupations = "SELECT member_occupation FROM collectivity_activity_occupation WHERE activity_id = ?";
+
+        Connection connection = null;
+
+        try {
+            connection = dataSourceConfig.getConnection();
+            
+            try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+                stmt.setString(1, collectivityId);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    List<CollectivityActivity> activities = new ArrayList<>();
+                    
+                    while (rs.next()) {
+                        String activityId = rs.getString("id");
+                        
+                        List<MemberOccupation> occupations = new ArrayList<>();
+                        try (PreparedStatement stmtOcc = connection.prepareStatement(sqlOccupations)) {
+                            stmtOcc.setString(1, activityId);
+                            try (ResultSet rsOcc = stmtOcc.executeQuery()) {
+                                while (rsOcc.next()) {
+                                    String occupationStr = rsOcc.getString("member_occupation");
+                                    if (occupationStr != null) {
+                                        try {
+                                            occupations.add(MemberOccupation.valueOf(occupationStr));
+                                        } catch (IllegalArgumentException e) {
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        
+                        MonthlyRecurrenceRule recurrenceRule = null;
+                        Integer weekOrdinal = rs.getObject("recurrence_week_ordinal", Integer.class);
+                        String dayOfWeek = rs.getString("recurrence_day_of_week");
+                        if (weekOrdinal != null || dayOfWeek != null) {
+                            recurrenceRule = MonthlyRecurrenceRule.builder()
+                                    .weekOrdinal(weekOrdinal)
+                                    .dayOfWeek(dayOfWeek)
+                                    .build();
+                        }
+                        
+                        CollectivityActivity activity = CollectivityActivity.builder()
+                                .id(activityId)
+                                .label(rs.getString("label"))
+                                .activityType(rs.getString("activity_type"))
+                                .memberOccupationConcerned(occupations.isEmpty() ? null : occupations)
+                                .recurrenceRule(recurrenceRule)
+                                .executiveDate(rs.getDate("executive_date") != null ? 
+                                        rs.getDate("executive_date").toLocalDate() : null)
+                                .build();
+                        
+                        activities.add(activity);
+                    }
+                    
+                    return activities;
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error retrieving collectivity activities", e);
+        } finally {
+            dataSourceConfig.closeConnection(connection);
+        }
+    }
 }

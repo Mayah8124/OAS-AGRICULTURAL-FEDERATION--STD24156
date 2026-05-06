@@ -4,10 +4,12 @@ import org.ingredients.agriculturalfederation.dto.request.CollectivityInformatio
 import org.ingredients.agriculturalfederation.dto.request.CreateCollectivityRequest;
 import org.ingredients.agriculturalfederation.dto.request.CreateMembershipFeeRequest;
 import org.ingredients.agriculturalfederation.entity.Collectivity;
+import org.ingredients.agriculturalfederation.entity.CollectivityActivity;
 import org.ingredients.agriculturalfederation.entity.FinancialAccount;
 import org.ingredients.agriculturalfederation.entity.MembershipFee;
 import org.ingredients.agriculturalfederation.dto.response.MembershipFeeResponse;
 import org.ingredients.agriculturalfederation.service.CollectivityService;
+import org.ingredients.agriculturalfederation.service.CollectivityActivityService;
 import org.ingredients.agriculturalfederation.service.FinancialAccountService;
 import org.ingredients.agriculturalfederation.service.MembershipFeeService;
 import org.ingredients.agriculturalfederation.validator.GetCollectivityValidator;
@@ -27,12 +29,14 @@ public class CollectivitiesController {
     private final MembershipFeeService membershipFeeService;
     private final GetCollectivityValidator getCollectivityValidator;
     private final FinancialAccountService financialAccountService;
+    private final CollectivityActivityService collectivityActivityService;
 
-    public CollectivitiesController(CollectivityService collectivityService, MembershipFeeService membershipFeeService, GetCollectivityValidator getCollectivityValidator, FinancialAccountService financialAccountService) {
+    public CollectivitiesController(CollectivityService collectivityService, MembershipFeeService membershipFeeService, GetCollectivityValidator getCollectivityValidator, FinancialAccountService financialAccountService, CollectivityActivityService collectivityActivityService) {
         this.collectivityService = collectivityService;
         this.membershipFeeService = membershipFeeService;
         this.getCollectivityValidator = getCollectivityValidator;
         this.financialAccountService = financialAccountService;
+        this.collectivityActivityService = collectivityActivityService;
     }
 
     @PostMapping("/collectivities")
@@ -65,6 +69,11 @@ public class CollectivitiesController {
     public ResponseEntity<Collectivity> getCollectivityById(@PathVariable String id) {
         getCollectivityValidator.validateGetCollectivity(id);
         return ResponseEntity.status(HttpStatus.OK).body(collectivityService.getCollectivityById(id));
+    }
+
+    @GetMapping("/collectivities/{id}/activities")
+    public ResponseEntity<List<CollectivityActivity>> getCollectivityActivities(@PathVariable String id) {
+        return ResponseEntity.status(HttpStatus.OK).body(collectivityActivityService.getActivities(id));
     }
 
     @GetMapping("/collectivities/{id}/financialAccounts")

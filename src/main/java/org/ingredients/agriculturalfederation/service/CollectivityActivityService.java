@@ -43,4 +43,9 @@ public class CollectivityActivityService {
 
         return collectivityActivityRepository.addActivities(collectivityId, toCreate);
     }
+
+    public List<CollectivityActivity> getActivities(String collectivityId) {
+        collectivityActivityValidator.validateCollectivityExists(collectivityId);
+        return collectivityActivityRepository.getActivities(collectivityId);
+    }
 }

@@ -8,4 +8,5 @@ public interface CollectivityActivityRepository {
     boolean collectivityExists(String collectivityId);
 
     List<CollectivityActivity> addActivities(String collectivityId, List<CollectivityActivity> activities);
+    List<CollectivityActivity> getActivities(String collectivityId);
 }
