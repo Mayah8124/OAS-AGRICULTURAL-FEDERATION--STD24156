@@ -24,10 +24,21 @@ public class JdbcCollectivityTransactionRepository implements CollectivityTransa
 
     @Override
     public List<CollectivityTransaction> findByCollectivityIdAndDateRange(String collectivityId, LocalDate fromDate, LocalDate toDate) {
-        String sql = "SELECT id, collectivity_id, member_debited_id, account_credited_id, amount, payment_mode, creation_date " +
-                "FROM collectivity_transaction " +
-                "WHERE collectivity_id = ? AND creation_date >= ? AND creation_date <= ? " +
-                "ORDER BY creation_date DESC";
+        String sql = "SELECT " +
+                "  t.id, t.collectivity_id, t.member_debited_id, t.account_credited_id, t.amount, t.payment_mode, t.creation_date, " +
+                "  m.first_name AS member_first_name, " +
+                "  m.last_name AS member_last_name, " +
+                "  m.birth_date AS member_birth_date, " +
+                "  m.gender AS member_gender, " +
+                "  m.address AS member_address, " +
+                "  m.profession AS member_profession, " +
+                "  m.phone_number AS member_phone_number, " +
+                "  m.email AS member_email, " +
+                "  m.occupation AS member_occupation " +
+                "FROM collectivity_transaction t " +
+                "LEFT JOIN member m ON m.id = t.member_debited_id " +
+                "WHERE t.collectivity_id = ? AND t.creation_date >= ? AND t.creation_date <= ? " +
+                "ORDER BY t.creation_date DESC";
 
         Connection connection = null;
         try {
@@ -201,6 +212,24 @@ public class JdbcCollectivityTransactionRepository implements CollectivityTransa
         String memberDebitedId = resultSet.getString("member_debited_id");
         if (memberDebitedId != null) {
             memberDebited.setId(memberDebitedId);
+            memberDebited.setFirstName(resultSet.getString("member_first_name"));
+            memberDebited.setLastName(resultSet.getString("member_last_name"));
+
+            Date birthDate = resultSet.getDate("member_birth_date");
+            if (birthDate != null) {
+                memberDebited.setBirthDate(birthDate.toLocalDate());
+            }
+
+            String gender = resultSet.getString("member_gender");
+            memberDebited.setGender(gender == null ? null : org.ingredients.agriculturalfederation.entity.Gender.valueOf(gender));
+
+            memberDebited.setAddress(resultSet.getString("member_address"));
+            memberDebited.setProfession(resultSet.getString("member_profession"));
+            memberDebited.setPhoneNumber(resultSet.getString("member_phone_number"));
+            memberDebited.setEmail(resultSet.getString("member_email"));
+
+            String occupation = resultSet.getString("member_occupation");
+            memberDebited.setOccupation(occupation == null ? null : org.ingredients.agriculturalfederation.entity.MemberOccupation.valueOf(occupation));
         }
         transaction.setMemberDebited(memberDebitedId == null ? null : memberDebited);
 
