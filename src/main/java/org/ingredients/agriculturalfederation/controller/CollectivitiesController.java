@@ -105,15 +105,15 @@ public class CollectivitiesController {
     }
 
     @GetMapping("/collectivities/statistics")
-    public ResponseEntity<List<CollectivityOverallStatistics>> getCollectivitiesStatistics(
+    public ResponseEntity<?> getCollectivitiesStatistics(
             @RequestParam("from") String from,
             @RequestParam("to") String to
     ) {
         if (from == null || from.trim().isEmpty()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Query parameter 'from' is required");
         }
         if (to == null || to.trim().isEmpty()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Query parameter 'to' is required");
         }
 
         LocalDate parsedFrom;
@@ -122,30 +122,33 @@ public class CollectivitiesController {
             parsedFrom = LocalDate.parse(from);
             parsedTo = LocalDate.parse(to);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Query parameters 'from' and 'to' must be dates in format YYYY-MM-DD");
         }
 
         try {
-            return ResponseEntity.status(HttpStatus.OK).body(collectivityStatisticsService.getCollectivitiesStatistics(parsedFrom, parsedTo));
+            return ResponseEntity.status(HttpStatus.OK)
+                    .body(collectivityStatisticsService.getCollectivitiesStatistics(parsedFrom, parsedTo));
         } catch (IllegalArgumentException e) {
             if (e.getMessage() != null && e.getMessage().toLowerCase().contains("not found")) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
             }
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            String msg = e.getMessage() == null || e.getMessage().trim().isEmpty() ? "Invalid request" : e.getMessage();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(msg);
         }
     }
 
     @GetMapping("/collectivities/{id}/statistics")
-    public ResponseEntity<List<CollectivityLocalStatistics>> getCollectivityStatistics(
+    public ResponseEntity<?> getCollectivityStatistics(
             @PathVariable String id,
             @RequestParam("from") String from,
             @RequestParam("to") String to
     ) {
         if (from == null || from.trim().isEmpty()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Query parameter 'from' is required");
         }
         if (to == null || to.trim().isEmpty()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Query parameter 'to' is required");
         }
 
         LocalDate parsedFrom;
@@ -154,7 +157,8 @@ public class CollectivitiesController {
             parsedFrom = LocalDate.parse(from);
             parsedTo = LocalDate.parse(to);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Query parameters 'from' and 'to' must be dates in format YYYY-MM-DD");
         }
 
         try {
@@ -162,9 +166,10 @@ public class CollectivitiesController {
             return ResponseEntity.status(HttpStatus.OK).body(statistics);
         } catch (IllegalArgumentException e) {
             if (e.getMessage() != null && e.getMessage().toLowerCase().contains("not found")) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
             }
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            String msg = e.getMessage() == null || e.getMessage().trim().isEmpty() ? "Invalid request" : e.getMessage();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(msg);
         }
     }
 
