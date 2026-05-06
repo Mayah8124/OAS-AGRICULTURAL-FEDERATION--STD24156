@@ -47,8 +47,12 @@ create table if not exists membership_fee (
     amount numeric not null,
     label text not null,
     status text not null,
+    active boolean not null default true,
     collectivity_id varchar(50) not null references collectivity(id)
 );
+
+-- Add active column if it doesn't exist (for existing databases)
+ALTER TABLE membership_fee ADD COLUMN IF NOT EXISTS active boolean not null default true;
 
 create table if not exists financial_account (
     id varchar(50) primary key,
@@ -121,3 +125,33 @@ create index if not exists idx_collectivity_financial_account_collectivity_id on
 create index if not exists idx_collectivity_financial_account_financial_account_id on collectivity_financial_account(financial_account_id);
 create index if not exists idx_collectivity_transaction_collectivity_id on collectivity_transaction(collectivity_id);
 create index if not exists idx_collectivity_transaction_creation_date on collectivity_transaction(creation_date);
+
+-- Tables for activity management and attendance tracking
+create table if not exists collectivity_activity (
+    id varchar(50) primary key,
+    collectivity_id varchar(50) not null references collectivity(id),
+    title text not null,
+    description text,
+    executive_date date not null,
+    location text,
+    creation_date date not null
+);
+
+create table if not exists activity_member_attendance (
+    id varchar(50) primary key,
+    activity_id varchar(50) not null references collectivity_activity(id),
+    member_id varchar(50) not null references member(id),
+    attendance_status text not null,
+    creation_date date not null,
+    unique(activity_id, member_id)
+);
+
+-- Additional indexes for performance optimization
+create index if not exists idx_member_collectivity_id on member(collectivity_id);
+create index if not exists idx_member_creation_date on member(creation_date);
+create index if not exists idx_membership_fee_active on membership_fee(active);
+create index if not exists idx_collectivity_activity_collectivity_id on collectivity_activity(collectivity_id);
+create index if not exists idx_collectivity_activity_executive_date on collectivity_activity(executive_date);
+create index if not exists idx_activity_member_attendance_activity_id on activity_member_attendance(activity_id);
+create index if not exists idx_activity_member_attendance_member_id on activity_member_attendance(member_id);
+create index if not exists idx_activity_member_attendance_status on activity_member_attendance(attendance_status);

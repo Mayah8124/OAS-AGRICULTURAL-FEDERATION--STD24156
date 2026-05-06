@@ -3,11 +3,7 @@ package org.ingredients.agriculturalfederation.controller;
 import org.ingredients.agriculturalfederation.dto.request.CollectivityInformationRequest;
 import org.ingredients.agriculturalfederation.dto.request.CreateCollectivityRequest;
 import org.ingredients.agriculturalfederation.dto.request.CreateMembershipFeeRequest;
-import org.ingredients.agriculturalfederation.dto.response.CollectivityStatisticsResponse;
-import org.ingredients.agriculturalfederation.entity.Collectivity;
-import org.ingredients.agriculturalfederation.entity.CollectivityLocalStatistics;
-import org.ingredients.agriculturalfederation.entity.FinancialAccount;
-import org.ingredients.agriculturalfederation.entity.MembershipFee;
+import org.ingredients.agriculturalfederation.entity.*;
 import org.ingredients.agriculturalfederation.dto.response.MembershipFeeResponse;
 import org.ingredients.agriculturalfederation.service.CollectivityService;
 import org.ingredients.agriculturalfederation.service.CollectivityStatisticsService;
@@ -15,8 +11,6 @@ import org.ingredients.agriculturalfederation.service.CollectivityMemberStatisti
 import org.ingredients.agriculturalfederation.service.FinancialAccountService;
 import org.ingredients.agriculturalfederation.service.MembershipFeeService;
 import org.ingredients.agriculturalfederation.validator.GetCollectivityValidator;
-import org.ingredients.agriculturalfederation.validator.exception.CollectivityNotFoundException;
-import org.ingredients.agriculturalfederation.validator.exception.InvalidCollectivityException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -111,15 +105,22 @@ public class CollectivitiesController {
     }
 
     @GetMapping("/collectivities/statistics")
-    public ResponseEntity<CollectivityStatisticsResponse> getCollectivitiesStatistics(
-            @RequestParam(value = "from", required = false) String from,
-            @RequestParam(value = "to", required = false) String to
+    public ResponseEntity<List<CollectivityOverallStatistics>> getCollectivitiesStatistics(
+            @RequestParam("from") String from,
+            @RequestParam("to") String to
     ) {
+        if (from == null || from.trim().isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
+        if (to == null || to.trim().isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
+
         LocalDate parsedFrom;
         LocalDate parsedTo;
         try {
-            parsedFrom = from == null || from.trim().isEmpty() ? null : LocalDate.parse(from);
-            parsedTo = to == null || to.trim().isEmpty() ? null : LocalDate.parse(to);
+            parsedFrom = LocalDate.parse(from);
+            parsedTo = LocalDate.parse(to);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }

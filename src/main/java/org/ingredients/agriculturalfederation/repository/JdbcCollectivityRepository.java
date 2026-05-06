@@ -12,6 +12,7 @@ import org.ingredients.agriculturalfederation.validator.exception.CollectivityNo
 import org.springframework.stereotype.Repository;
 
 import java.sql.*;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -284,5 +285,72 @@ public class JdbcCollectivityRepository implements CollectivityRepository {
             dataSourceConfig.closeConnection(conn);
         }
         return Optional.empty();
+    }
+
+    @Override
+    public List<Collectivity> findAll() {
+        String sql = "SELECT id, location, federation_approval, name, number FROM collectivity ORDER BY name";
+        
+        Connection conn = null;
+        try {
+            conn = dataSourceConfig.getConnection();
+            try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+                try (ResultSet rs = stmt.executeQuery()) {
+                    List<Collectivity> collectivities = new ArrayList<>();
+                    while (rs.next()) {
+                        Collectivity collectivity = new Collectivity();
+                        collectivity.setId(rs.getString("id"));
+                        collectivity.setLocation(rs.getString("location"));
+                        collectivity.setFederationApproval(rs.getBoolean("federation_approval"));
+                        collectivity.setName(rs.getString("name"));
+                        collectivity.setNumber(rs.getInt("number"));
+                        collectivities.add(collectivity);
+                    }
+                    return collectivities;
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error retrieving all collectivities", e);
+        } finally {
+            dataSourceConfig.closeConnection(conn);
+        }
+    }
+
+    @Override
+    public long countNewMembers(String collectivityId, LocalDate from, LocalDate to) {
+        String sql = """
+            SELECT COUNT(*) as new_members_count
+            FROM member m
+            WHERE m.collectivity_id = ?
+            AND m.id IN (
+                SELECT cm.member_id
+                FROM collectivity_member cm
+                JOIN member m2 ON cm.member_id = m2.id
+                WHERE cm.collectivity_id = ?
+                AND m2.birth_date BETWEEN ? AND ?
+            )
+            """;
+
+        Connection conn = null;
+        try {
+            conn = dataSourceConfig.getConnection();
+            try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+                stmt.setString(1, collectivityId);
+                stmt.setString(2, collectivityId);
+                stmt.setDate(3, java.sql.Date.valueOf(from));
+                stmt.setDate(4, java.sql.Date.valueOf(to));
+                
+                try (ResultSet rs = stmt.executeQuery()) {
+                    if (rs.next()) {
+                        return rs.getLong("new_members_count");
+                    }
+                    return 0;
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error counting new members", e);
+        } finally {
+            dataSourceConfig.closeConnection(conn);
+        }
     }
 }
