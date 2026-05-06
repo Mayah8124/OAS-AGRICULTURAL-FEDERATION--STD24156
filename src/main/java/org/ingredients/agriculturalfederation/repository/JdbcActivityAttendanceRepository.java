@@ -76,8 +76,8 @@ public class JdbcActivityAttendanceRepository implements ActivityAttendanceRepos
                 COALESCE(aa.attendance_status, 'UNDEFINED') as attendance_status,
                 cao.member_occupation as activity_occupation
             FROM member m
-            LEFT JOIN activity_attendance aa ON m.id = aa.member_id AND aa.activity_id = ?
-            LEFT JOIN collectivity_activity cao ON ? = cao.id
+            LEFT JOIN activity_member_attendance aa ON m.id = aa.member_id AND aa.activity_id = ?
+            LEFT JOIN collectivity_activity_occupation cao ON ? = cao.activity_id
             WHERE (m.collectivity_id = ? OR aa.member_id IS NOT NULL)
             ORDER BY m.last_name, m.first_name
             """;
@@ -175,8 +175,8 @@ public class JdbcActivityAttendanceRepository implements ActivityAttendanceRepos
             return List.of();
         }
 
-        String sqlCheckExisting = "SELECT attendance_status FROM activity_attendance WHERE activity_id = ? AND member_id = ?";
-        String sqlInsert = "INSERT INTO activity_attendance (activity_id, member_id, attendance_status) VALUES (?, ?, ?)";
+        String sqlCheckExisting = "SELECT attendance_status FROM activity_member_attendance WHERE activity_id = ? AND member_id = ?";
+        String sqlInsert = "INSERT INTO activity_member_attendance (activity_id, member_id, attendance_status) VALUES (?, ?, ?)";
         String sqlGetMemberInfo = "SELECT id, first_name, last_name, email, occupation FROM member WHERE id = ?";
 
         Connection connection = null;
