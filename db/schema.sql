@@ -17,7 +17,8 @@ create table if not exists member (
     phone_number varchar(50),
     email text,
     occupation text,
-    collectivity_id varchar(50) references collectivity(id)
+    collectivity_id varchar(50) references collectivity(id),
+    creation_date date
 );
 
 create table if not exists member_referee (
@@ -34,10 +35,10 @@ create table if not exists collectivity_member (
 
 create table if not exists collectivity_structure (
     collectivity_id varchar(50) primary key references collectivity(id),
-    president_member_id varchar(50) not null references member(id),
-    vice_president_member_id varchar(50) not null references member(id),
-    treasurer_member_id varchar(50) not null references member(id),
-    secretary_member_id varchar(50) not null references member(id)
+    president_member_id varchar(50) references member(id),
+    vice_president_member_id varchar(50) references member(id),
+    treasurer_member_id varchar(50) references member(id),
+    secretary_member_id varchar(50) references member(id)
 );
 
 create table if not exists membership_fee (
@@ -47,6 +48,7 @@ create table if not exists membership_fee (
     amount numeric not null,
     label text not null,
     status text not null,
+    active boolean not null default true,
     collectivity_id varchar(50) not null references collectivity(id)
 );
 
@@ -72,10 +74,7 @@ create table if not exists bank_account (
     id varchar(50) primary key references financial_account(id),
     holder_name text,
     bank_name text,
-    bank_code integer,
-    bank_branch_code integer,
-    bank_account_number integer,
-    bank_account_key integer,
+    account_number text,
     amount numeric
 );
 
@@ -91,9 +90,9 @@ create table if not exists member_payment (
     member_id varchar(50) not null references member(id),
     membership_fee_id varchar(50) references membership_fee(id),
     account_credited_id varchar(50) not null references financial_account(id),
-    amount numeric,
-    payment_mode text,
-    creation_date date
+    amount numeric not null,
+    payment_mode text not null,
+    creation_date date not null
 );
 
 create table if not exists collectivity_financial_account (
@@ -107,9 +106,9 @@ create table if not exists collectivity_transaction (
     collectivity_id varchar(50) not null references collectivity(id),
     member_debited_id varchar(50) references member(id),
     account_credited_id varchar(50) not null references financial_account(id),
-    amount numeric,
-    payment_mode text,
-    creation_date date
+    amount numeric not null,
+    payment_mode text not null,
+    creation_date date not null
 );
 
 create table if not exists collectivity_activity (
@@ -147,3 +146,7 @@ create index if not exists idx_collectivity_transaction_collectivity_id on colle
 create index if not exists idx_collectivity_transaction_creation_date on collectivity_transaction(creation_date);
 create index if not exists idx_collectivity_activity_collectivity_id on collectivity_activity(collectivity_id);
 create index if not exists idx_activity_member_attendance_activity_id on activity_member_attendance(activity_id);
+create index if not exists idx_collectivity_activity_executive_date on collectivity_activity(executive_date);
+create index if not exists idx_activity_member_attendance_member_id on activity_member_attendance(member_id);
+create index if not exists idx_activity_member_attendance_status on activity_member_attendance(attendance_status);
+create index if not exists idx_member_creation_date on member(creation_date);

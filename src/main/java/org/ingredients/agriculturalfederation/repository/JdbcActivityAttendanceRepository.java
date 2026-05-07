@@ -14,6 +14,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Repository
 public class JdbcActivityAttendanceRepository implements ActivityAttendanceRepository {
@@ -176,7 +177,7 @@ public class JdbcActivityAttendanceRepository implements ActivityAttendanceRepos
         }
 
         String sqlCheckExisting = "SELECT attendance_status FROM activity_member_attendance WHERE activity_id = ? AND member_id = ?";
-        String sqlInsert = "INSERT INTO activity_member_attendance (activity_id, member_id, attendance_status) VALUES (?, ?, ?)";
+        String sqlInsert = "INSERT INTO activity_member_attendance (id, activity_id, member_id, attendance_status) VALUES (?, ?, ?, ?)";
         String sqlGetMemberInfo = "SELECT id, first_name, last_name, email, occupation FROM member WHERE id = ?";
 
         Connection connection = null;
@@ -202,9 +203,10 @@ public class JdbcActivityAttendanceRepository implements ActivityAttendanceRepos
                 }
 
                 try (PreparedStatement stmtInsert = connection.prepareStatement(sqlInsert)) {
-                    stmtInsert.setString(1, activityId);
-                    stmtInsert.setString(2, request.getMemberIdentifier());
-                    stmtInsert.setString(3, request.getAttendanceStatus().name());
+                    stmtInsert.setString(1, UUID.randomUUID().toString());
+                    stmtInsert.setString(2, activityId);
+                    stmtInsert.setString(3, request.getMemberIdentifier());
+                    stmtInsert.setString(4, request.getAttendanceStatus().name());
                     stmtInsert.executeUpdate();
                 }
 

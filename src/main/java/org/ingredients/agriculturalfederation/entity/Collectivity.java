@@ -13,6 +13,7 @@ public class Collectivity {
     private String location;
     private String name;
     private Integer number;
+    private Boolean federationApproval;
     private CollectivityStructure structure;
     private List<Member> members;
 }

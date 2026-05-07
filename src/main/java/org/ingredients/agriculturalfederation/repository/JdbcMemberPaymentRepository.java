@@ -3,17 +3,13 @@ package org.ingredients.agriculturalfederation.repository;
 import org.ingredients.agriculturalfederation.config.DataSourceConfig;
 import org.ingredients.agriculturalfederation.dto.request.CreateMemberPaymentRequest;
 import org.ingredients.agriculturalfederation.dto.response.AccountCreditedResponse;
-import org.ingredients.agriculturalfederation.dto.response.MemberDebitedResponse;
 import org.ingredients.agriculturalfederation.dto.response.MemberPaymentResponse;
+import org.ingredients.agriculturalfederation.entity.CollectivityPaymentStats;
 import org.ingredients.agriculturalfederation.entity.PaymentMode;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
-import java.sql.Connection;
-import java.sql.Date;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.sql.Types;
+import java.sql.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -119,5 +115,124 @@ public class JdbcMemberPaymentRepository implements MemberPaymentRepository {
                 dataSourceConfig.closeConnection(conn);
             }
         }
+    }
+
+    @Override
+    public List<MemberPaymentResponse> findByMemberIdAndDateRange(String memberId, LocalDate from, LocalDate to) {
+        if (memberId == null || memberId.trim().isEmpty() || from == null || to == null) {
+            return List.of();
+        }
+
+        String sql = """
+                        SELECT id, amount, payment_mode, account_credited_id, creation_date 
+                        FROM member_payment 
+                        WHERE member_id = ? AND creation_date BETWEEN ? AND ?
+                        ORDER BY creation_date
+                """;
+
+        List<MemberPaymentResponse> payments = new ArrayList<>();
+
+        try (Connection conn = dataSourceConfig.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, memberId);
+            stmt.setDate(2, Date.valueOf(from));
+            stmt.setDate(3, Date.valueOf(to));
+
+            try (ResultSet rs = stmt.executeQuery()) {
+
+                while (rs.next()) {
+                    MemberPaymentResponse payment = new MemberPaymentResponse();
+                    payment.setId(rs.getString("id"));
+                    payment.setAmount(rs.getBigDecimal("amount"));
+                    payment.setPaymentMode(rs.getString("payment_mode"));
+                    payment.setCreationDate(rs.getDate("creation_date").toLocalDate());
+
+                    AccountCreditedResponse accountCredited = new AccountCreditedResponse();
+                    accountCredited.setId(rs.getString("account_credited_id"));
+                    payment.setAccountCredited(accountCredited);
+
+                    payments.add(payment);
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error finding member payments in date range", e);
+        }
+
+        return payments;
+    }
+
+    @Override
+    public double findTotalEarnedByMemberIdAndDateRange(String memberId, LocalDate from, LocalDate to) {
+        if (memberId == null || memberId.trim().isEmpty() || from == null || to == null) {
+            return 0.0;
+        }
+
+        String sql = "SELECT SUM(amount) FROM member_payment WHERE member_id = ? AND creation_date BETWEEN ? AND ?";
+
+        try (Connection conn = dataSourceConfig.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, memberId);
+            stmt.setDate(2, Date.valueOf(from));
+            stmt.setDate(3, Date.valueOf(to));
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    BigDecimal sum = rs.getBigDecimal(1);
+                    return sum != null ? sum.doubleValue() : 0.0;
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error calculating total earned for member", e);
+        }
+        return 0.0;
+    }
+
+    @Override
+    public List<CollectivityPaymentStats> getCollectivityPaymentStats(LocalDate from, LocalDate to) {
+        String sql = """
+            SELECT 
+                c.id as collectivity_id,
+                COUNT(DISTINCT m.id) as total_members,
+                COUNT(DISTINCT CASE WHEN mp_first.first_payment_date >= ? THEN m.id END) as members_current_with_dues,
+                COUNT(DISTINCT CASE WHEN mp_first.first_payment_date >= ? THEN m.id END) as new_members_count
+            FROM collectivity c
+            LEFT JOIN member m ON m.collectivity_id = c.id
+            LEFT JOIN (
+                SELECT 
+                    mp.member_id,
+                    MIN(mp.creation_date) as first_payment_date
+                FROM member_payment mp
+                WHERE mp.creation_date BETWEEN ? AND ?
+                GROUP BY mp.member_id
+            ) mp_first ON mp_first.member_id = m.id
+            GROUP BY c.id
+            ORDER BY c.id
+            """;
+
+        List<CollectivityPaymentStats> stats = new ArrayList<>();
+        
+        try (Connection conn = dataSourceConfig.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setDate(1, java.sql.Date.valueOf(from));
+            stmt.setDate(2, java.sql.Date.valueOf(from));
+            stmt.setDate(3, java.sql.Date.valueOf(from));
+            stmt.setDate(4, java.sql.Date.valueOf(to));
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    String collectivityId = rs.getString("collectivity_id");
+                    long totalMembers = rs.getLong("total_members");
+                    long membersCurrentWithDues = rs.getLong("members_current_with_dues");
+                    long newMembersCount = rs.getLong("new_members_count");
+                    
+                    stats.add(new CollectivityPaymentStats(collectivityId, totalMembers, membersCurrentWithDues, newMembersCount));
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error retrieving collectivity payment statistics", e);
+        }
+        
+        return stats;
     }
 }

@@ -12,6 +12,7 @@ import org.ingredients.agriculturalfederation.validator.exception.CollectivityNo
 import org.springframework.stereotype.Repository;
 
 import java.sql.*;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -192,6 +193,18 @@ public class JdbcCollectivityRepository implements CollectivityRepository {
         return memberRepository.findAllById(memberIds);
     }
 
+    private static MemberOccupation parseMemberOccupation(String raw) {
+        if (raw == null) {
+            return null;
+        }
+        String normalized = raw.trim().toUpperCase();
+        try {
+            return MemberOccupation.valueOf(normalized);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+
     public Optional<Collectivity> findByIdWithMembers(String id) {
         String sql = """
                         SELECT c.id, c.location, c.name, c.number,
@@ -253,7 +266,7 @@ public class JdbcCollectivityRepository implements CollectivityRepository {
                     member.setProfession(rs.getString("profession"));
                     member.setPhoneNumber(rs.getString("phone_number"));
                     member.setEmail(rs.getString("email"));
-                    member.setOccupation(rs.getString("occupation") != null ? MemberOccupation.valueOf(rs.getString("occupation")) : null);
+                    member.setOccupation(parseMemberOccupation(rs.getString("occupation")));
                     
                     members.add(member);
                 }
@@ -269,5 +282,65 @@ public class JdbcCollectivityRepository implements CollectivityRepository {
             dataSourceConfig.closeConnection(conn);
         }
         return Optional.empty();
+    }
+
+    @Override
+    public List<Collectivity> findAll() {
+        String sql = "SELECT id, location, federation_approval, name, number FROM collectivity ORDER BY name";
+
+        Connection conn = null;
+        try {
+            conn = dataSourceConfig.getConnection();
+            try (PreparedStatement stmt = conn.prepareStatement(sql);
+                 ResultSet rs = stmt.executeQuery()) {
+                List<Collectivity> collectivities = new ArrayList<>();
+                while (rs.next()) {
+                    Collectivity collectivity = new Collectivity();
+                    collectivity.setId(rs.getString("id"));
+                    collectivity.setLocation(rs.getString("location"));
+                    collectivity.setFederationApproval(rs.getBoolean("federation_approval"));
+                    collectivity.setName(rs.getString("name"));
+                    Object numberObj = rs.getObject("number");
+                    collectivity.setNumber(numberObj == null ? null : ((Number) numberObj).intValue());
+                    collectivities.add(collectivity);
+                }
+                return collectivities;
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error retrieving all collectivities", e);
+        } finally {
+            dataSourceConfig.closeConnection(conn);
+        }
+    }
+
+    @Override
+    public long countNewMembers(String collectivityId, LocalDate from, LocalDate to) {
+        String sql = """
+                SELECT COUNT(*) as new_members_count
+                FROM member m
+                WHERE m.collectivity_id = ?
+                  AND m.creation_date >= ?
+                  AND m.creation_date <= ?
+                """;
+
+        Connection conn = null;
+        try {
+            conn = dataSourceConfig.getConnection();
+            try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+                stmt.setString(1, collectivityId);
+                stmt.setDate(2, Date.valueOf(from));
+                stmt.setDate(3, Date.valueOf(to));
+                try (ResultSet rs = stmt.executeQuery()) {
+                    if (rs.next()) {
+                        return rs.getLong("new_members_count");
+                    }
+                    return 0;
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error counting new members", e);
+        } finally {
+            dataSourceConfig.closeConnection(conn);
+        }
     }
 }

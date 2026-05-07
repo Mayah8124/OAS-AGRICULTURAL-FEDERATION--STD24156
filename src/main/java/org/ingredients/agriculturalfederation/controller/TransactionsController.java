@@ -20,9 +20,9 @@ public class TransactionsController {
     public ResponseEntity<List<CollectivityTransactionResponse>> getTransactionsBetween(
             @PathVariable String id,
             @RequestParam String from,
-            @RequestParam String to
-    ) {
-        List<CollectivityTransactionResponse> transactions = transactionsService.getCollectivityTransactionsBetween(id, LocalDate.parse(from), LocalDate.parse(to));
+            @RequestParam String to) {
+        List<CollectivityTransactionResponse> transactions = transactionsService.getCollectivityTransactionsBetween(id,
+                LocalDate.parse(from), LocalDate.parse(to));
         return ResponseEntity.ok(transactions);
     }
 }

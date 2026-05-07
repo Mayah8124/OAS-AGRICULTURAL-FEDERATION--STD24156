@@ -1,10 +1,7 @@
 package org.ingredients.agriculturalfederation.entity;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import org.ingredients.agriculturalfederation.entity.enums.DayOfWeek;
 
 @Data
 @NoArgsConstructor
@@ -13,5 +10,5 @@ import lombok.NoArgsConstructor;
 @EqualsAndHashCode
 public class MonthlyRecurrenceRule {
     private Integer weekOrdinal;
-    private String dayOfWeek;
+    private DayOfWeek dayOfWeek;
 }

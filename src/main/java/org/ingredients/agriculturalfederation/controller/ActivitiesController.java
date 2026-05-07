@@ -36,7 +36,7 @@ public class ActivitiesController {
             @PathVariable String id,
             @RequestBody List<CreateCollectivityActivityRequest> request
     ) {
-        return ResponseEntity.status(HttpStatus.OK).body(collectivityActivityService.addActivities(id, request));
+        return ResponseEntity.status(HttpStatus.CREATED).body(collectivityActivityService.addActivities(id, request));
     }
 
     @GetMapping("/collectivities/{id}/activities")

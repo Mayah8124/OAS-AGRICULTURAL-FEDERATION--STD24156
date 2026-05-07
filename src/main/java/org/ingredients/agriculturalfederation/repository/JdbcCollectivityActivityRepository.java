@@ -2,8 +2,10 @@ package org.ingredients.agriculturalfederation.repository;
 
 import org.ingredients.agriculturalfederation.config.DataSourceConfig;
 import org.ingredients.agriculturalfederation.entity.CollectivityActivity;
-import org.ingredients.agriculturalfederation.entity.MemberOccupation;
 import org.ingredients.agriculturalfederation.entity.MonthlyRecurrenceRule;
+import org.ingredients.agriculturalfederation.entity.enums.ActivityType;
+import org.ingredients.agriculturalfederation.entity.enums.DayOfWeek;
+import org.ingredients.agriculturalfederation.entity.enums.MemberOccupation;
 import org.springframework.stereotype.Repository;
 
 import java.sql.Connection;
@@ -12,6 +14,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -70,7 +73,7 @@ public class JdbcCollectivityActivityRepository implements CollectivityActivityR
                     stmt.setString(1, activity.getId());
                     stmt.setString(2, collectivityId);
                     stmt.setString(3, activity.getLabel());
-                    stmt.setString(4, activity.getActivityType());
+                    stmt.setString(4, activity.getActivityType() == null ? null : activity.getActivityType().name());
 
                     if (activity.getExecutiveDate() == null) {
                         stmt.setNull(5, Types.DATE);
@@ -91,7 +94,7 @@ public class JdbcCollectivityActivityRepository implements CollectivityActivityR
                         if (recurrenceRule.getDayOfWeek() == null) {
                             stmt.setNull(7, Types.VARCHAR);
                         } else {
-                            stmt.setString(7, recurrenceRule.getDayOfWeek());
+                            stmt.setString(7, recurrenceRule.getDayOfWeek().name());
                         }
                     }
 
@@ -177,18 +180,36 @@ public class JdbcCollectivityActivityRepository implements CollectivityActivityR
                         
                         MonthlyRecurrenceRule recurrenceRule = null;
                         Integer weekOrdinal = rs.getObject("recurrence_week_ordinal", Integer.class);
-                        String dayOfWeek = rs.getString("recurrence_day_of_week");
-                        if (weekOrdinal != null || dayOfWeek != null) {
+                        String dayOfWeekStr = rs.getString("recurrence_day_of_week");
+                        if (weekOrdinal != null || dayOfWeekStr != null) {
+                            DayOfWeek parsedDayOfWeek = null;
+                            if (dayOfWeekStr != null) {
+                                try {
+                                    parsedDayOfWeek = DayOfWeek.valueOf(dayOfWeekStr);
+                                } catch (IllegalArgumentException e) {
+                                    parsedDayOfWeek = null;
+                                }
+                            }
                             recurrenceRule = MonthlyRecurrenceRule.builder()
                                     .weekOrdinal(weekOrdinal)
-                                    .dayOfWeek(dayOfWeek)
+                                    .dayOfWeek(parsedDayOfWeek)
                                     .build();
+                        }
+
+                        ActivityType parsedActivityType = null;
+                        String activityType = rs.getString("activity_type");
+                        if (activityType != null) {
+                            try {
+                                parsedActivityType = ActivityType.valueOf(activityType);
+                            } catch (IllegalArgumentException e) {
+                                parsedActivityType = null;
+                            }
                         }
                         
                         CollectivityActivity activity = CollectivityActivity.builder()
                                 .id(activityId)
                                 .label(rs.getString("label"))
-                                .activityType(rs.getString("activity_type"))
+                                .activityType(parsedActivityType)
                                 .memberOccupationConcerned(occupations.isEmpty() ? null : occupations)
                                 .recurrenceRule(recurrenceRule)
                                 .executiveDate(rs.getDate("executive_date") != null ? 

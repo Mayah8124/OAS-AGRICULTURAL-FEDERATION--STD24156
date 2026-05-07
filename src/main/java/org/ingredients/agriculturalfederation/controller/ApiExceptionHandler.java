@@ -50,7 +50,11 @@ public class ApiExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<String> handleIllegalArgument(IllegalArgumentException e) {
         log.warn("Illegal argument: {}", e.getMessage(), e);
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).contentType(MediaType.TEXT_PLAIN).body("Invalid request.");
+        String msg = e.getMessage();
+        if (msg == null || msg.trim().isEmpty()) {
+            msg = "Invalid request.";
+        }
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).contentType(MediaType.TEXT_PLAIN).body(msg);
     }
 
     @ExceptionHandler(RuntimeException.class)

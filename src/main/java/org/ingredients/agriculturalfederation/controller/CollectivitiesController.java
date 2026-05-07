@@ -3,16 +3,14 @@ package org.ingredients.agriculturalfederation.controller;
 import org.ingredients.agriculturalfederation.dto.request.CollectivityInformationRequest;
 import org.ingredients.agriculturalfederation.dto.request.CreateCollectivityRequest;
 import org.ingredients.agriculturalfederation.dto.request.CreateMembershipFeeRequest;
-import org.ingredients.agriculturalfederation.entity.Collectivity;
-import org.ingredients.agriculturalfederation.entity.FinancialAccount;
-import org.ingredients.agriculturalfederation.entity.MembershipFee;
+import org.ingredients.agriculturalfederation.entity.*;
 import org.ingredients.agriculturalfederation.dto.response.MembershipFeeResponse;
 import org.ingredients.agriculturalfederation.service.CollectivityService;
+import org.ingredients.agriculturalfederation.service.CollectivityStatisticsService;
+import org.ingredients.agriculturalfederation.service.CollectivityMemberStatisticsService;
 import org.ingredients.agriculturalfederation.service.FinancialAccountService;
 import org.ingredients.agriculturalfederation.service.MembershipFeeService;
 import org.ingredients.agriculturalfederation.validator.GetCollectivityValidator;
-import org.ingredients.agriculturalfederation.validator.exception.CollectivityNotFoundException;
-import org.ingredients.agriculturalfederation.validator.exception.InvalidCollectivityException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,12 +22,23 @@ import java.util.List;
 public class CollectivitiesController {
 
     private final CollectivityService collectivityService;
+    private final CollectivityStatisticsService collectivityStatisticsService;
+    private final CollectivityMemberStatisticsService collectivityMemberStatisticsService;
     private final MembershipFeeService membershipFeeService;
     private final GetCollectivityValidator getCollectivityValidator;
     private final FinancialAccountService financialAccountService;
 
-    public CollectivitiesController(CollectivityService collectivityService, MembershipFeeService membershipFeeService, GetCollectivityValidator getCollectivityValidator, FinancialAccountService financialAccountService) {
+    public CollectivitiesController(
+            CollectivityService collectivityService,
+            CollectivityStatisticsService collectivityStatisticsService,
+            CollectivityMemberStatisticsService collectivityMemberStatisticsService,
+            MembershipFeeService membershipFeeService,
+            GetCollectivityValidator getCollectivityValidator,
+            FinancialAccountService financialAccountService
+    ) {
         this.collectivityService = collectivityService;
+        this.collectivityStatisticsService = collectivityStatisticsService;
+        this.collectivityMemberStatisticsService = collectivityMemberStatisticsService;
         this.membershipFeeService = membershipFeeService;
         this.getCollectivityValidator = getCollectivityValidator;
         this.financialAccountService = financialAccountService;
@@ -58,7 +67,7 @@ public class CollectivitiesController {
             @PathVariable String id,
             @RequestBody List<CreateMembershipFeeRequest> request
     ) {
-        return ResponseEntity.status(HttpStatus.OK).body(membershipFeeService.createMembershipFees(id, request));
+        return ResponseEntity.status(HttpStatus.CREATED).body(membershipFeeService.createMembershipFees(id, request));
     }
 
     @GetMapping("/collectivities/{id}")
@@ -95,13 +104,73 @@ public class CollectivitiesController {
         }
     }
 
-    @ExceptionHandler(CollectivityNotFoundException.class)
-    public ResponseEntity<String> handleCollectivityNotFoundException(CollectivityNotFoundException e) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+    @GetMapping("/collectivities/statistics")
+    public ResponseEntity<?> getCollectivitiesStatistics(
+            @RequestParam("from") String from,
+            @RequestParam("to") String to
+    ) {
+        if (from == null || from.trim().isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Query parameter 'from' is required");
+        }
+        if (to == null || to.trim().isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Query parameter 'to' is required");
+        }
+
+        LocalDate parsedFrom;
+        LocalDate parsedTo;
+        try {
+            parsedFrom = LocalDate.parse(from);
+            parsedTo = LocalDate.parse(to);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Query parameters 'from' and 'to' must be dates in format YYYY-MM-DD");
+        }
+
+        try {
+            return ResponseEntity.status(HttpStatus.OK)
+                    .body(collectivityStatisticsService.getCollectivitiesStatistics(parsedFrom, parsedTo));
+        } catch (IllegalArgumentException e) {
+            if (e.getMessage() != null && e.getMessage().toLowerCase().contains("not found")) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+            }
+            String msg = e.getMessage() == null || e.getMessage().trim().isEmpty() ? "Invalid request" : e.getMessage();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(msg);
+        }
     }
 
-    @ExceptionHandler(InvalidCollectivityException.class)
-    public ResponseEntity<String> handleInvalidCollectivityException(InvalidCollectivityException e) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+    @GetMapping("/collectivities/{id}/statistics")
+    public ResponseEntity<?> getCollectivityStatistics(
+            @PathVariable String id,
+            @RequestParam("from") String from,
+            @RequestParam("to") String to
+    ) {
+        if (from == null || from.trim().isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Query parameter 'from' is required");
+        }
+        if (to == null || to.trim().isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Query parameter 'to' is required");
+        }
+
+        LocalDate parsedFrom;
+        LocalDate parsedTo;
+        try {
+            parsedFrom = LocalDate.parse(from);
+            parsedTo = LocalDate.parse(to);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Query parameters 'from' and 'to' must be dates in format YYYY-MM-DD");
+        }
+
+        try {
+            List<CollectivityLocalStatistics> statistics = collectivityMemberStatisticsService.getCollectivityStatistics(id, parsedFrom, parsedTo);
+            return ResponseEntity.status(HttpStatus.OK).body(statistics);
+        } catch (IllegalArgumentException e) {
+            if (e.getMessage() != null && e.getMessage().toLowerCase().contains("not found")) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+            }
+            String msg = e.getMessage() == null || e.getMessage().trim().isEmpty() ? "Invalid request" : e.getMessage();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(msg);
+        }
     }
+
 }

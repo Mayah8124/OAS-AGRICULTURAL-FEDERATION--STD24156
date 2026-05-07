@@ -74,7 +74,7 @@ public class JdbcMembershipFeeRepository implements MembershipFeeRepository {
     @Override
     public List<MembershipFee> findByCollectivityId(String collectivityId) {
         String sql = """
-                        SELECT id, eligible_from, frequency, amount, label, status 
+                        SELECT id, eligible_from, frequency, amount, label, status
                         FROM membership_fee WHERE collectivity_id = ?
                 """;
 
@@ -108,11 +108,48 @@ public class JdbcMembershipFeeRepository implements MembershipFeeRepository {
     }
 
     @Override
+    public List<MembershipFee> findActiveByCollectivityId(String collectivityId) {
+        String sql = """
+                        SELECT id, eligible_from, frequency, amount, label, status
+                        FROM membership_fee
+                        WHERE collectivity_id = ? AND status = 'ACTIVE'
+                """;
+
+        List<MembershipFee> membershipFees = new ArrayList<>();
+        Connection conn = null;
+
+        try {
+            conn = dataSourceConfig.getConnection();
+            PreparedStatement stmt = conn.prepareStatement(sql);
+            stmt.setString(1, collectivityId);
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                MembershipFee membershipFee = new MembershipFee();
+                membershipFee.setId(rs.getObject("id").toString());
+                membershipFee.setEligibleFrom(rs.getDate("eligible_from").toLocalDate());
+                membershipFee.setFrequency(Frequency.valueOf(rs.getString("frequency")));
+                membershipFee.setAmount(rs.getBigDecimal("amount"));
+                membershipFee.setLabel(rs.getString("label"));
+                membershipFee.setStatus(ActivityStatus.valueOf(rs.getString("status")));
+
+                membershipFees.add(membershipFee);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error finding active membership fees for collectivity", e);
+        } finally {
+            dataSourceConfig.closeConnection(conn);
+        }
+
+        return membershipFees;
+    }
+
+    @Override
     public void save(MembershipFee membershipFee) {
         String sql = """
-                        INSERT INTO membership_fee (id, eligible_from, frequency, amount, label, status, collectivity_id) 
-                        VALUES (?, ?, ?, ?, ?, ?, ?)
-                     """;
+                   INSERT INTO membership_fee (id, eligible_from, frequency, amount, label, status, collectivity_id)
+                   VALUES (?, ?, ?, ?, ?, ?, ?)
+                """;
 
         Connection conn = null;
         try {
