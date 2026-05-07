@@ -39,15 +39,13 @@ public class TransactionsService {
             response.setId(transaction.getId());
             response.setCreationDate(transaction.getCreationDate());
             response.setAmount(transaction.getAmount());
-            response.setPaymentMode(transaction.getPaymentMode().toString());
+            response.setPaymentMode(transaction.getPaymentMode() == null ? null : transaction.getPaymentMode().toString());
             
             // AccountCredited mapping
             if (transaction.getAccountCredited() != null) {
                 AccountCreditedResponse accountResponse = new AccountCreditedResponse();
-                // Assuming accountCredited has getId() and getAmount() methods
-                // You may need to adapt this based on your actual AccountCredited structure
-                accountResponse.setId("account-id"); // placeholder
-                accountResponse.setAmount(transaction.getAmount()); // placeholder
+                accountResponse.setId(transaction.getAccountCredited().getId());
+                accountResponse.setAmount(transaction.getAmount());
                 response.setAccountCredited(accountResponse);
             }
             
@@ -59,12 +57,12 @@ public class TransactionsService {
                 memberResponse.setFirstName(member.getFirstName());
                 memberResponse.setLastName(member.getLastName());
                 memberResponse.setBirthDate(member.getBirthDate());
-                memberResponse.setGender(member.getGender().toString());
+                memberResponse.setGender(member.getGender() == null ? null : member.getGender().toString());
                 memberResponse.setAddress(member.getAddress());
                 memberResponse.setProfession(member.getProfession());
                 memberResponse.setPhoneNumber(member.getPhoneNumber());
                 memberResponse.setEmail(member.getEmail());
-                memberResponse.setOccupation(member.getOccupation().toString());
+                memberResponse.setOccupation(member.getOccupation() == null ? null : member.getOccupation().toString());
                 memberResponse.setReferees(
                         member.getReferees() == null
                                 ? null

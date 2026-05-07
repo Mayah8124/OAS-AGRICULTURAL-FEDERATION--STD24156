@@ -198,7 +198,7 @@ public class JdbcCollectivityRepository implements CollectivityRepository {
                         cs.president_member_id, cs.vice_president_member_id, cs.treasurer_member_id, cs.secretary_member_id,
                         m.id as member_id, m.first_name, m.last_name, m.birth_date, m.gender, m.address, m.profession,
                         m.phone_number, m.email, m.occupation
-                        FROM collectivity
+                        FROM collectivity c
                         LEFT JOIN collectivity_structure cs ON c.id = cs.collectivity_id
                         LEFT JOIN collectivity_member cm ON c.id = cm.collectivity_id
                         LEFT JOIN member m ON cm.member_id = m.id

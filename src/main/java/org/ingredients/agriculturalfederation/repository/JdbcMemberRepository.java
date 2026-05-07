@@ -7,8 +7,10 @@ import org.ingredients.agriculturalfederation.entity.MemberOccupation;
 import org.springframework.stereotype.Repository;
 
 import java.sql.*;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 @Repository
@@ -161,13 +163,43 @@ public class JdbcMemberRepository implements MemberRepository {
         member.setFirstName(rs.getString("first_name"));
         member.setLastName(rs.getString("last_name"));
         member.setBirthDate(rs.getDate("birth_date").toLocalDate());
-        member.setGender(Gender.valueOf(rs.getString("gender")));
+        member.setGender(parseGender(rs.getString("gender")));
         member.setAddress(rs.getString("address"));
         member.setProfession(rs.getString("profession"));
         member.setPhoneNumber(rs.getString("phone_number"));
         member.setEmail(rs.getString("email"));
-        member.setOccupation(MemberOccupation.valueOf(rs.getString("occupation")));
+        member.setOccupation(parseOccupation(rs.getString("occupation")));
         member.setReferees(new ArrayList<>());
         return member;
+    }
+
+    private static Gender parseGender(String raw) {
+        if (raw == null) {
+            return null;
+        }
+        String normalized = raw.trim().toUpperCase(Locale.ROOT);
+        if (normalized.isEmpty()) {
+            return null;
+        }
+        try {
+            return Gender.valueOf(normalized);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+
+    private static MemberOccupation parseOccupation(String raw) {
+        if (raw == null) {
+            return null;
+        }
+        String normalized = raw.trim().toUpperCase(Locale.ROOT);
+        if (normalized.isEmpty()) {
+            return null;
+        }
+        try {
+            return MemberOccupation.valueOf(normalized);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 }
