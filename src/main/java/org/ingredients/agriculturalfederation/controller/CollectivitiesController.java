@@ -3,11 +3,7 @@ package org.ingredients.agriculturalfederation.controller;
 import org.ingredients.agriculturalfederation.dto.request.CollectivityInformationRequest;
 import org.ingredients.agriculturalfederation.dto.request.CreateCollectivityRequest;
 import org.ingredients.agriculturalfederation.dto.request.CreateMembershipFeeRequest;
-import org.ingredients.agriculturalfederation.dto.response.CollectivityStatisticsResponse;
-import org.ingredients.agriculturalfederation.entity.Collectivity;
-import org.ingredients.agriculturalfederation.entity.CollectivityLocalStatistics;
-import org.ingredients.agriculturalfederation.entity.FinancialAccount;
-import org.ingredients.agriculturalfederation.entity.MembershipFee;
+import org.ingredients.agriculturalfederation.entity.*;
 import org.ingredients.agriculturalfederation.dto.response.MembershipFeeResponse;
 import org.ingredients.agriculturalfederation.service.CollectivityService;
 import org.ingredients.agriculturalfederation.service.CollectivityStatisticsService;
@@ -15,8 +11,6 @@ import org.ingredients.agriculturalfederation.service.CollectivityMemberStatisti
 import org.ingredients.agriculturalfederation.service.FinancialAccountService;
 import org.ingredients.agriculturalfederation.service.MembershipFeeService;
 import org.ingredients.agriculturalfederation.validator.GetCollectivityValidator;
-import org.ingredients.agriculturalfederation.validator.exception.CollectivityNotFoundException;
-import org.ingredients.agriculturalfederation.validator.exception.InvalidCollectivityException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -73,7 +67,7 @@ public class CollectivitiesController {
             @PathVariable String id,
             @RequestBody List<CreateMembershipFeeRequest> request
     ) {
-        return ResponseEntity.status(HttpStatus.OK).body(membershipFeeService.createMembershipFees(id, request));
+        return ResponseEntity.status(HttpStatus.CREATED).body(membershipFeeService.createMembershipFees(id, request));
     }
 
     @GetMapping("/collectivities/{id}")
@@ -111,40 +105,15 @@ public class CollectivitiesController {
     }
 
     @GetMapping("/collectivities/statistics")
-    public ResponseEntity<CollectivityStatisticsResponse> getCollectivitiesStatistics(
-            @RequestParam(value = "from", required = false) String from,
-            @RequestParam(value = "to", required = false) String to
-    ) {
-        LocalDate parsedFrom;
-        LocalDate parsedTo;
-        try {
-            parsedFrom = from == null || from.trim().isEmpty() ? null : LocalDate.parse(from);
-            parsedTo = to == null || to.trim().isEmpty() ? null : LocalDate.parse(to);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        }
-
-        try {
-            return ResponseEntity.status(HttpStatus.OK).body(collectivityStatisticsService.getCollectivitiesStatistics(parsedFrom, parsedTo));
-        } catch (IllegalArgumentException e) {
-            if (e.getMessage() != null && e.getMessage().toLowerCase().contains("not found")) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-            }
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        }
-    }
-
-    @GetMapping("/collectivities/{id}/statistics")
-    public ResponseEntity<List<CollectivityLocalStatistics>> getCollectivityStatistics(
-            @PathVariable String id,
+    public ResponseEntity<?> getCollectivitiesStatistics(
             @RequestParam("from") String from,
             @RequestParam("to") String to
     ) {
         if (from == null || from.trim().isEmpty()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Query parameter 'from' is required");
         }
         if (to == null || to.trim().isEmpty()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Query parameter 'to' is required");
         }
 
         LocalDate parsedFrom;
@@ -153,7 +122,43 @@ public class CollectivitiesController {
             parsedFrom = LocalDate.parse(from);
             parsedTo = LocalDate.parse(to);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Query parameters 'from' and 'to' must be dates in format YYYY-MM-DD");
+        }
+
+        try {
+            return ResponseEntity.status(HttpStatus.OK)
+                    .body(collectivityStatisticsService.getCollectivitiesStatistics(parsedFrom, parsedTo));
+        } catch (IllegalArgumentException e) {
+            if (e.getMessage() != null && e.getMessage().toLowerCase().contains("not found")) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+            }
+            String msg = e.getMessage() == null || e.getMessage().trim().isEmpty() ? "Invalid request" : e.getMessage();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(msg);
+        }
+    }
+
+    @GetMapping("/collectivities/{id}/statistics")
+    public ResponseEntity<?> getCollectivityStatistics(
+            @PathVariable String id,
+            @RequestParam("from") String from,
+            @RequestParam("to") String to
+    ) {
+        if (from == null || from.trim().isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Query parameter 'from' is required");
+        }
+        if (to == null || to.trim().isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Query parameter 'to' is required");
+        }
+
+        LocalDate parsedFrom;
+        LocalDate parsedTo;
+        try {
+            parsedFrom = LocalDate.parse(from);
+            parsedTo = LocalDate.parse(to);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Query parameters 'from' and 'to' must be dates in format YYYY-MM-DD");
         }
 
         try {
@@ -161,9 +166,10 @@ public class CollectivitiesController {
             return ResponseEntity.status(HttpStatus.OK).body(statistics);
         } catch (IllegalArgumentException e) {
             if (e.getMessage() != null && e.getMessage().toLowerCase().contains("not found")) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
             }
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            String msg = e.getMessage() == null || e.getMessage().trim().isEmpty() ? "Invalid request" : e.getMessage();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(msg);
         }
     }
 

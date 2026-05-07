@@ -83,20 +83,23 @@ public class JdbcMembershipFeeRepository implements MembershipFeeRepository {
 
         try {
             conn = dataSourceConfig.getConnection();
-            PreparedStatement stmt = conn.prepareStatement(sql);
-            stmt.setString(1, collectivityId);
-            ResultSet rs = stmt.executeQuery();
-
-            while (rs.next()) {
-                MembershipFee membershipFee = new MembershipFee();
-                membershipFee.setId(rs.getObject("id").toString());
-                membershipFee.setEligibleFrom(rs.getDate("eligible_from").toLocalDate());
-                membershipFee.setFrequency(Frequency.valueOf(rs.getString("frequency")));
-                membershipFee.setAmount(rs.getBigDecimal("amount"));
-                membershipFee.setLabel(rs.getString("label"));
-                membershipFee.setStatus(ActivityStatus.valueOf(rs.getString("status")));
-
-                membershipFees.add(membershipFee);
+            try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+                stmt.setString(1, collectivityId);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        MembershipFee membershipFee = new MembershipFee();
+                        membershipFee.setId(rs.getString("id"));
+                        Date eligibleFrom = rs.getDate("eligible_from");
+                        membershipFee.setEligibleFrom(eligibleFrom != null ? eligibleFrom.toLocalDate() : null);
+                        String frequency = rs.getString("frequency");
+                        membershipFee.setFrequency(frequency != null ? Frequency.valueOf(frequency) : null);
+                        membershipFee.setAmount(rs.getBigDecimal("amount"));
+                        membershipFee.setLabel(rs.getString("label"));
+                        String status = rs.getString("status");
+                        membershipFee.setStatus(status != null ? ActivityStatus.valueOf(status) : null);
+                        membershipFees.add(membershipFee);
+                    }
+                }
             }
         } catch (SQLException e) {
             throw new RuntimeException("Error finding membership fees for collectivity", e);
@@ -120,20 +123,23 @@ public class JdbcMembershipFeeRepository implements MembershipFeeRepository {
 
         try {
             conn = dataSourceConfig.getConnection();
-            PreparedStatement stmt = conn.prepareStatement(sql);
-            stmt.setString(1, collectivityId);
-            ResultSet rs = stmt.executeQuery();
-
-            while (rs.next()) {
-                MembershipFee membershipFee = new MembershipFee();
-                membershipFee.setId(rs.getObject("id").toString());
-                membershipFee.setEligibleFrom(rs.getDate("eligible_from").toLocalDate());
-                membershipFee.setFrequency(Frequency.valueOf(rs.getString("frequency")));
-                membershipFee.setAmount(rs.getBigDecimal("amount"));
-                membershipFee.setLabel(rs.getString("label"));
-                membershipFee.setStatus(ActivityStatus.valueOf(rs.getString("status")));
-
-                membershipFees.add(membershipFee);
+            try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+                stmt.setString(1, collectivityId);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        MembershipFee membershipFee = new MembershipFee();
+                        membershipFee.setId(rs.getString("id"));
+                        Date eligibleFrom = rs.getDate("eligible_from");
+                        membershipFee.setEligibleFrom(eligibleFrom != null ? eligibleFrom.toLocalDate() : null);
+                        String frequency = rs.getString("frequency");
+                        membershipFee.setFrequency(frequency != null ? Frequency.valueOf(frequency) : null);
+                        membershipFee.setAmount(rs.getBigDecimal("amount"));
+                        membershipFee.setLabel(rs.getString("label"));
+                        String status = rs.getString("status");
+                        membershipFee.setStatus(status != null ? ActivityStatus.valueOf(status) : null);
+                        membershipFees.add(membershipFee);
+                    }
+                }
             }
         } catch (SQLException e) {
             throw new RuntimeException("Error finding active membership fees for collectivity", e);

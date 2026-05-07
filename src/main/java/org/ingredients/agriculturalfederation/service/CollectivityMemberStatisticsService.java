@@ -1,12 +1,8 @@
 package org.ingredients.agriculturalfederation.service;
 
-import org.ingredients.agriculturalfederation.dto.response.MemberPaymentResponse;
 import org.ingredients.agriculturalfederation.entity.*;
-import org.ingredients.agriculturalfederation.repository.CollectivityRepository;
-import org.ingredients.agriculturalfederation.repository.MemberPaymentRepository;
-import org.ingredients.agriculturalfederation.repository.MembershipFeeRepository;
+import org.ingredients.agriculturalfederation.repository.*;
 import org.ingredients.agriculturalfederation.validator.exception.CollectivityNotFoundException;
-import org.ingredients.agriculturalfederation.validator.exception.InvalidCollectivityException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -20,37 +16,46 @@ public class CollectivityMemberStatisticsService {
     private final CollectivityRepository collectivityRepository;
     private final MembershipFeeRepository membershipFeeRepository;
     private final MemberPaymentRepository memberPaymentRepository;
+    private final CollectivityActivityAttendanceRepository activityAttendanceRepository;
 
     public CollectivityMemberStatisticsService(
             CollectivityRepository collectivityRepository,
             MembershipFeeRepository membershipFeeRepository,
-            MemberPaymentRepository memberPaymentRepository
+            MemberPaymentRepository memberPaymentRepository,
+            CollectivityActivityAttendanceRepository activityAttendanceRepository
     ) {
         this.collectivityRepository = collectivityRepository;
         this.membershipFeeRepository = membershipFeeRepository;
         this.memberPaymentRepository = memberPaymentRepository;
+        this.activityAttendanceRepository = activityAttendanceRepository;
     }
 
     public List<CollectivityLocalStatistics> getCollectivityStatistics(String id, LocalDate from, LocalDate to) {
-        Collectivity collectivity = collectivityRepository.findByIdWithMembers(id)
-                .orElseThrow(() -> new CollectivityNotFoundException("Collectivity not found"));
+        if (from != null && to != null && from.isAfter(to)) {
+            throw new IllegalArgumentException("From date cannot be after to date");
+        }
+        if (!collectivityRepository.findById(id).isPresent()) {
+            throw new CollectivityNotFoundException("Collectivity not found");
+        }
 
-        List<MembershipFee> activeFees = membershipFeeRepository.findActiveByCollectivityId(id);
+        List<MemberFullStats> memberFullStats = activityAttendanceRepository.getMemberFullStats(id, from, to);
+        
         List<CollectivityLocalStatistics> statistics = new ArrayList<>();
 
-        for (Member member : collectivity.getMembers()) {
-            MemberDescription desc = new MemberDescription(member.getId(), member.getFirstName(), member.getLastName(), member.getEmail());
-            double earned = memberPaymentRepository.findTotalEarnedByMemberIdAndDateRange(member.getId(), from, to);
-            double unpaid = 0.0;
-
-            for (MembershipFee fee : activeFees) {
-                if (fee.getEligibleFrom() != null && !fee.getEligibleFrom().isAfter(to)) {
-                    LocalDate start = fee.getEligibleFrom().isBefore(from) ? from : fee.getEligibleFrom();
-                    unpaid += calculatePeriods(start, to, fee.getFrequency()) * (fee.getAmount() != null ? fee.getAmount().doubleValue() : 0.0);
-                }
-            }
-
-            statistics.add(new CollectivityLocalStatistics(desc, earned, Math.max(0.0, unpaid - earned)));
+        for (MemberFullStats memberStat : memberFullStats) {
+            MemberDescription desc = new MemberDescription(
+                memberStat.getMemberId(), 
+                memberStat.getFirstName(), 
+                memberStat.getLastName(), 
+                memberStat.getEmail()
+            );
+            
+            statistics.add(new CollectivityLocalStatistics(
+                desc, 
+                memberStat.getEarned(), 
+                memberStat.getUnpaid(), 
+                memberStat.getAttendanceRate()
+            ));
         }
 
         return statistics;

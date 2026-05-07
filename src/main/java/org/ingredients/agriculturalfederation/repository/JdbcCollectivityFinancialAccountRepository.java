@@ -50,8 +50,7 @@ public class JdbcCollectivityFinancialAccountRepository implements CollectivityF
         String sql = "SELECT fa.id AS financial_account_id, fa.type AS financial_account_type, " +
                 "fab.amount AS balance_amount, " +
                 "mba.holder_name AS mba_holder_name, mba.mobile_banking_service AS mba_service, mba.mobile_number AS mba_number, " +
-                "ba.holder_name AS ba_holder_name, ba.bank_name AS ba_bank_name, ba.bank_code AS ba_bank_code, ba.bank_branch_code AS ba_branch_code, " +
-                "ba.bank_account_number AS ba_account_number, ba.bank_account_key AS ba_account_key " +
+                "ba.holder_name AS ba_holder_name, ba.bank_name AS ba_bank_name, ba.account_number AS ba_account_number " +
                 "FROM collectivity_financial_account cfa " +
                 "JOIN financial_account fa ON fa.id = cfa.financial_account_id " +
                 "LEFT JOIN cash_account ca ON ca.id = fa.id " +
@@ -99,20 +98,20 @@ public class JdbcCollectivityFinancialAccountRepository implements CollectivityF
                             continue;
                         }
 
-                        if ("BANK".equalsIgnoreCase(type)) {
+                        if ("BANK_TRANSFER".equalsIgnoreCase(type)) {
                             BankAccount bank = new BankAccount();
                             bank.setId(id);
                             bank.setHolderName(rs.getString("ba_holder_name"));
                             String bankName = rs.getString("ba_bank_name");
                             bank.setBankName(bankName == null ? null : Bank.valueOf(bankName));
-                            Object bankCode = rs.getObject("ba_bank_code");
-                            bank.setBankCode(bankCode == null ? null : ((Number) bankCode).intValue());
-                            Object branchCode = rs.getObject("ba_branch_code");
-                            bank.setBankBranchCode(branchCode == null ? null : ((Number) branchCode).intValue());
-                            Object accNumber = rs.getObject("ba_account_number");
-                            bank.setBankAccountNumber(accNumber == null ? null : ((Number) accNumber).intValue());
-                            Object accKey = rs.getObject("ba_account_key");
-                            bank.setBankAccountKey(accKey == null ? null : ((Number) accKey).intValue());
+                            String accountNumber = rs.getString("ba_account_number");
+                            if (accountNumber != null) {
+                                try {
+                                    bank.setBankAccountNumber(Integer.parseInt(accountNumber));
+                                } catch (NumberFormatException e) {
+                                    bank.setBankAccountNumber(null);
+                                }
+                            }
                             bank.setAmount(rs.getBigDecimal("balance_amount"));
                             out.add(bank);
                         }

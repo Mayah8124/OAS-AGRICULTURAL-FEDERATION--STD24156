@@ -4,6 +4,7 @@ import org.ingredients.agriculturalfederation.config.DataSourceConfig;
 import org.ingredients.agriculturalfederation.entity.CollectivityTransaction;
 import org.ingredients.agriculturalfederation.entity.CashAccount;
 import org.ingredients.agriculturalfederation.entity.FinancialAccount;
+import org.ingredients.agriculturalfederation.entity.Gender;
 import org.ingredients.agriculturalfederation.entity.Member;
 import org.ingredients.agriculturalfederation.entity.PaymentMode;
 import org.springframework.stereotype.Repository;
@@ -24,21 +25,13 @@ public class JdbcCollectivityTransactionRepository implements CollectivityTransa
 
     @Override
     public List<CollectivityTransaction> findByCollectivityIdAndDateRange(String collectivityId, LocalDate fromDate, LocalDate toDate) {
-        String sql = "SELECT " +
-                "  t.id, t.collectivity_id, t.member_debited_id, t.account_credited_id, t.amount, t.payment_mode, t.creation_date, " +
-                "  m.first_name AS member_first_name, " +
-                "  m.last_name AS member_last_name, " +
-                "  m.birth_date AS member_birth_date, " +
-                "  m.gender AS member_gender, " +
-                "  m.address AS member_address, " +
-                "  m.profession AS member_profession, " +
-                "  m.phone_number AS member_phone_number, " +
-                "  m.email AS member_email, " +
-                "  m.occupation AS member_occupation " +
-                "FROM collectivity_transaction t " +
-                "LEFT JOIN member m ON m.id = t.member_debited_id " +
-                "WHERE t.collectivity_id = ? AND t.creation_date >= ? AND t.creation_date <= ? " +
-                "ORDER BY t.creation_date DESC";
+        String sql = "SELECT ct.id, ct.collectivity_id, ct.account_credited_id, ct.amount, ct.payment_mode, ct.creation_date, " +
+                "m.id as m_id, m.first_name, m.last_name, m.birth_date, m.gender, m.address, m.profession, " +
+                "m.phone_number, m.email, m.occupation " +
+                "FROM collectivity_transaction ct " +
+                "LEFT JOIN member m ON m.id = ct.member_debited_id " +
+                "WHERE ct.collectivity_id = ? AND ct.creation_date >= ? AND ct.creation_date <= ? " +
+                "ORDER BY ct.creation_date DESC";
 
         Connection connection = null;
         try {
@@ -52,7 +45,7 @@ public class JdbcCollectivityTransactionRepository implements CollectivityTransa
                 try (ResultSet resultSet = statement.executeQuery()) {
                     List<CollectivityTransaction> transactions = new ArrayList<>();
                     while (resultSet.next()) {
-                        transactions.add(mapRow(resultSet));
+                        transactions.add(mapRowWithMemberJoin(resultSet));
                     }
                     return transactions;
                 }
@@ -192,6 +185,43 @@ public class JdbcCollectivityTransactionRepository implements CollectivityTransa
         }
     }
 
+    private static CollectivityTransaction mapRowWithMemberJoin(ResultSet resultSet) throws SQLException {
+        CollectivityTransaction transaction = new CollectivityTransaction();
+        transaction.setId(resultSet.getString("id"));
+        transaction.setCreationDate(resultSet.getDate("creation_date").toLocalDate());
+        transaction.setAmount(resultSet.getBigDecimal("amount"));
+
+        String paymentMode = resultSet.getString("payment_mode");
+        transaction.setPaymentMode(paymentMode == null ? null : PaymentMode.valueOf(paymentMode));
+
+        String accountCreditedId = resultSet.getString("account_credited_id");
+        if (accountCreditedId != null) {
+            FinancialAccount accountCredited = new CashAccount();
+            accountCredited.setId(accountCreditedId);
+            transaction.setAccountCredited(accountCredited);
+        }
+
+        String memberId = resultSet.getString("m_id");
+        if (memberId != null) {
+            Member member = new Member();
+            member.setId(memberId);
+            member.setFirstName(resultSet.getString("first_name"));
+            member.setLastName(resultSet.getString("last_name"));
+            Date birthDate = resultSet.getDate("birth_date");
+            member.setBirthDate(birthDate != null ? birthDate.toLocalDate() : null);
+            String gender = resultSet.getString("gender");
+            try { member.setGender(gender != null ? Gender.valueOf(gender) : null); } catch (IllegalArgumentException ignored) {}
+            member.setAddress(resultSet.getString("address"));
+            member.setProfession(resultSet.getString("profession"));
+            member.setPhoneNumber(resultSet.getString("phone_number"));
+            member.setEmail(resultSet.getString("email"));
+            member.setReferees(new java.util.ArrayList<>());
+            transaction.setMemberDebited(member);
+        }
+
+        return transaction;
+    }
+
     private static CollectivityTransaction mapRow(ResultSet resultSet) throws SQLException {
         CollectivityTransaction transaction = new CollectivityTransaction();
         transaction.setId(resultSet.getObject("id").toString());
@@ -212,24 +242,6 @@ public class JdbcCollectivityTransactionRepository implements CollectivityTransa
         String memberDebitedId = resultSet.getString("member_debited_id");
         if (memberDebitedId != null) {
             memberDebited.setId(memberDebitedId);
-            memberDebited.setFirstName(resultSet.getString("member_first_name"));
-            memberDebited.setLastName(resultSet.getString("member_last_name"));
-
-            Date birthDate = resultSet.getDate("member_birth_date");
-            if (birthDate != null) {
-                memberDebited.setBirthDate(birthDate.toLocalDate());
-            }
-
-            String gender = resultSet.getString("member_gender");
-            memberDebited.setGender(gender == null ? null : org.ingredients.agriculturalfederation.entity.Gender.valueOf(gender));
-
-            memberDebited.setAddress(resultSet.getString("member_address"));
-            memberDebited.setProfession(resultSet.getString("member_profession"));
-            memberDebited.setPhoneNumber(resultSet.getString("member_phone_number"));
-            memberDebited.setEmail(resultSet.getString("member_email"));
-
-            String occupation = resultSet.getString("member_occupation");
-            memberDebited.setOccupation(occupation == null ? null : org.ingredients.agriculturalfederation.entity.MemberOccupation.valueOf(occupation));
         }
         transaction.setMemberDebited(memberDebitedId == null ? null : memberDebited);
 

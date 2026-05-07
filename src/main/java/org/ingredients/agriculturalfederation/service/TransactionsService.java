@@ -18,8 +18,7 @@ public class TransactionsService {
     private final CollectivityTransactionRepository collectivityTransactionRepository;
     private final TransactionsValidator transactionsValidator;
 
-    public TransactionsService(CollectivityTransactionRepository collectivityTransactionRepository,
-            TransactionsValidator transactionsValidator) {
+    public TransactionsService(CollectivityTransactionRepository collectivityTransactionRepository, TransactionsValidator transactionsValidator) {
         this.collectivityTransactionRepository = collectivityTransactionRepository;
         this.transactionsValidator = transactionsValidator;
     }
@@ -27,28 +26,30 @@ public class TransactionsService {
     public List<CollectivityTransactionResponse> getCollectivityTransactionsBetween(
             String collectivityId,
             LocalDate from,
-            LocalDate to) {
+            LocalDate to
+    ) {
         transactionsValidator.validateParameters(collectivityId, from, to);
         boolean collectivityExists = collectivityTransactionRepository.existsById(collectivityId);
         transactionsValidator.validateCollectivityExists(collectivityId, collectivityExists);
-
-        List<CollectivityTransaction> transactions = collectivityTransactionRepository
-                .findByCollectivityIdAndDateRange(collectivityId, from, to);
-
+        
+        List<CollectivityTransaction> transactions = collectivityTransactionRepository.findByCollectivityIdAndDateRange(collectivityId, from, to);
+        
         return transactions.stream().map(transaction -> {
             CollectivityTransactionResponse response = new CollectivityTransactionResponse();
             response.setId(transaction.getId());
             response.setCreationDate(transaction.getCreationDate());
             response.setAmount(transaction.getAmount());
-            response.setPaymentMode(transaction.getPaymentMode().toString());
-
+            response.setPaymentMode(transaction.getPaymentMode() == null ? null : transaction.getPaymentMode().toString());
+            
+            // AccountCredited mapping
             if (transaction.getAccountCredited() != null) {
                 AccountCreditedResponse accountResponse = new AccountCreditedResponse();
-                accountResponse.setId("account-id");
+                accountResponse.setId(transaction.getAccountCredited().getId());
                 accountResponse.setAmount(transaction.getAmount());
                 response.setAccountCredited(accountResponse);
             }
-
+            
+            // MemberDebited mapping
             if (transaction.getMemberDebited() != null) {
                 Member member = transaction.getMemberDebited();
                 MemberDebitedResponse memberResponse = new MemberDebitedResponse();
@@ -56,19 +57,20 @@ public class TransactionsService {
                 memberResponse.setFirstName(member.getFirstName());
                 memberResponse.setLastName(member.getLastName());
                 memberResponse.setBirthDate(member.getBirthDate());
-                memberResponse.setGender(member.getGender().toString());
+                memberResponse.setGender(member.getGender() == null ? null : member.getGender().toString());
                 memberResponse.setAddress(member.getAddress());
                 memberResponse.setProfession(member.getProfession());
                 memberResponse.setPhoneNumber(member.getPhoneNumber());
                 memberResponse.setEmail(member.getEmail());
-                memberResponse.setOccupation(member.getOccupation().toString());
+                memberResponse.setOccupation(member.getOccupation() == null ? null : member.getOccupation().toString());
                 memberResponse.setReferees(
                         member.getReferees() == null
                                 ? null
-                                : member.getReferees().stream().map(Member::getId).collect(Collectors.toList()));
+                                : member.getReferees().stream().map(Member::getId).collect(Collectors.toList())
+                );
                 response.setMemberDebited(memberResponse);
             }
-
+            
             return response;
         }).collect(Collectors.toList());
     }

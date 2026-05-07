@@ -7,10 +7,12 @@ import org.ingredients.agriculturalfederation.entity.*;
 import org.ingredients.agriculturalfederation.repository.CollectivityRepository;
 import org.ingredients.agriculturalfederation.repository.MemberRepository;
 import org.ingredients.agriculturalfederation.validator.CollectivityValidator;
+import org.ingredients.agriculturalfederation.validator.exception.CollectivityNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -44,6 +46,11 @@ public class CollectivityService {
             collectivity.setMembers(new ArrayList<>());
 
             collectivityRepository.save(collectivity, false);
+
+            if (req.getMembers() != null && !req.getMembers().isEmpty()) {
+                collectivityRepository.linkMembers(collectivity.getId(), req.getMembers());
+            }
+
             out.add(collectivity);
         }
         return out;
@@ -68,6 +75,10 @@ public class CollectivityService {
     }
 
     public Collectivity getCollectivityById(String id) {
-        return collectivityRepository.findByIdWithMembers(id).get();
+        Optional<Collectivity> result = collectivityRepository.findByIdWithMembers(id);
+        if (result.isEmpty()) {
+            throw new CollectivityNotFoundException("Collectivity with id " + id + " not found");
+        }
+        return result.get();
     }
 }

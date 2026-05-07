@@ -1,15 +1,15 @@
 package org.ingredients.agriculturalfederation.entity;
 
 import lombok.*;
+import org.ingredients.agriculturalfederation.entity.enums.AttendanceStatus;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @EqualsAndHashCode
-public class CollectivityLocalStatistics {
+public class ActivityMemberAttendance {
+    private String id;
     private MemberDescription memberDescription;
-    private double earnedAmount;
-    private double unpaidAmount;
-    private double attendanceRate;
+    private AttendanceStatus attendanceStatus;
 }
