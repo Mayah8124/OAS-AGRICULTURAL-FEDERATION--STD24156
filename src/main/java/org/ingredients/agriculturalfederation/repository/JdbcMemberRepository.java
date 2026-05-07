@@ -24,44 +24,37 @@ public class JdbcMemberRepository implements MemberRepository {
 
     @Override
     public void save(Member member) {
-        String sql = "INSERT INTO member (id, first_name, last_name, birth_date, gender, address, profession, phone_number, email, occupation, collectivity_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        Connection conn = null;
-        try {
-            conn = dataSourceConfig.getConnection();
-            PreparedStatement stmt = conn.prepareStatement(sql);
+        String sql = "INSERT INTO member (id, first_name, last_name, birth_date, gender, address, profession, phone_number, email, occupation, collectivity_id, creation_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        try (Connection conn = dataSourceConfig.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, member.getId());
             stmt.setString(2, member.getFirstName());
             stmt.setString(3, member.getLastName());
-            stmt.setDate(4, Date.valueOf(member.getBirthDate()));
-            stmt.setString(5, member.getGender().name());
+            if (member.getBirthDate() != null) { stmt.setDate(4, Date.valueOf(member.getBirthDate())); } else { stmt.setNull(4, Types.DATE); }
+            stmt.setString(5, member.getGender() != null ? member.getGender().name() : null);
             stmt.setString(6, member.getAddress());
             stmt.setString(7, member.getProfession());
             stmt.setString(8, member.getPhoneNumber());
             stmt.setString(9, member.getEmail());
-            stmt.setString(10, member.getOccupation().name());
+            stmt.setString(10, member.getOccupation() != null ? member.getOccupation().name() : null);
             stmt.setObject(11, null);
+            stmt.setDate(12, Date.valueOf(LocalDate.now()));
             stmt.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException("Error saving member", e);
-        } finally {
-            dataSourceConfig.closeConnection(conn);
         }
     }
 
     @Override
     public void updateCollectivityId(String memberId, String collectivityId) {
         String sql = "UPDATE member SET collectivity_id = ? WHERE id = ?";
-        Connection conn = null;
-        try {
-            conn = dataSourceConfig.getConnection();
-            PreparedStatement stmt = conn.prepareStatement(sql);
+        try (Connection conn = dataSourceConfig.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, collectivityId);
             stmt.setString(2, memberId);
             stmt.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException("Error updating member collectivity_id", e);
-        } finally {
-            dataSourceConfig.closeConnection(conn);
         }
     }
 
@@ -69,19 +62,16 @@ public class JdbcMemberRepository implements MemberRepository {
     public List<String> findRefereeIdsByMemberId(String memberId) {
         String sql = "SELECT referee_id FROM member_referee WHERE member_id = ?";
         List<String> refereeIds = new ArrayList<>();
-        Connection conn = null;
-        try {
-            conn = dataSourceConfig.getConnection();
-            PreparedStatement stmt = conn.prepareStatement(sql);
+        try (Connection conn = dataSourceConfig.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, memberId);
-            ResultSet rs = stmt.executeQuery();
-            while (rs.next()) {
-                refereeIds.add(rs.getObject("referee_id").toString());
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    refereeIds.add(rs.getString("referee_id"));
+                }
             }
         } catch (SQLException e) {
             throw new RuntimeException("Error finding referee ids by member id", e);
-        } finally {
-            dataSourceConfig.closeConnection(conn);
         }
         return refereeIds;
     }
@@ -89,19 +79,16 @@ public class JdbcMemberRepository implements MemberRepository {
     @Override
     public Optional<Member> findById(String id) {
         String sql = "SELECT id, first_name, last_name, birth_date, gender, address, profession, phone_number, email, occupation FROM member WHERE id = ?";
-        Connection conn = null;
-        try {
-            conn = dataSourceConfig.getConnection();
-            PreparedStatement stmt = conn.prepareStatement(sql);
+        try (Connection conn = dataSourceConfig.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, id);
-            ResultSet rs = stmt.executeQuery();
-            if (rs.next()) {
-                return Optional.of(mapResultSetToMember(rs));
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return Optional.of(mapResultSetToMember(rs));
+                }
             }
         } catch (SQLException e) {
             throw new RuntimeException("Error finding member by id", e);
-        } finally {
-            dataSourceConfig.closeConnection(conn);
         }
         return Optional.empty();
     }
@@ -121,21 +108,18 @@ public class JdbcMemberRepository implements MemberRepository {
         sql.append(")");
 
         List<Member> members = new ArrayList<>();
-        Connection conn = null;
-        try {
-            conn = dataSourceConfig.getConnection();
-            PreparedStatement stmt = conn.prepareStatement(sql.toString());
+        try (Connection conn = dataSourceConfig.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
             for (int i = 0; i < ids.size(); i++) {
                 stmt.setString(i + 1, ids.get(i));
             }
-            ResultSet rs = stmt.executeQuery();
-            while (rs.next()) {
-                members.add(mapResultSetToMember(rs));
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    members.add(mapResultSetToMember(rs));
+                }
             }
         } catch (SQLException e) {
             throw new RuntimeException("Error finding members by ids", e);
-        } finally {
-            dataSourceConfig.closeConnection(conn);
         }
         return members;
     }
@@ -143,10 +127,8 @@ public class JdbcMemberRepository implements MemberRepository {
     @Override
     public void saveReferees(String memberId, List<String> refereeIds) {
         String sql = "INSERT INTO member_referee (member_id, referee_id) VALUES (?, ?)";
-        Connection conn = null;
-        try {
-            conn = dataSourceConfig.getConnection();
-            PreparedStatement stmt = conn.prepareStatement(sql);
+        try (Connection conn = dataSourceConfig.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
             for (String refId : refereeIds) {
                 stmt.setString(1, memberId);
                 stmt.setString(2, refId);
@@ -155,17 +137,16 @@ public class JdbcMemberRepository implements MemberRepository {
             stmt.executeBatch();
         } catch (SQLException e) {
             throw new RuntimeException("Error saving referees", e);
-        } finally {
-            dataSourceConfig.closeConnection(conn);
         }
     }
 
     private Member mapResultSetToMember(ResultSet rs) throws SQLException {
         Member member = new Member();
-        member.setId(rs.getObject("id").toString());
+        member.setId(rs.getString("id"));
         member.setFirstName(rs.getString("first_name"));
         member.setLastName(rs.getString("last_name"));
-        member.setBirthDate(rs.getDate("birth_date").toLocalDate());
+        Date birthDate = rs.getDate("birth_date");
+        member.setBirthDate(birthDate != null ? birthDate.toLocalDate() : null);
         member.setGender(parseGender(rs.getString("gender")));
         member.setAddress(rs.getString("address"));
         member.setProfession(rs.getString("profession"));

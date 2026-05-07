@@ -345,7 +345,9 @@ end $$;
 insert into collectivity_activity (id, collectivity_id, label, activity_type, executive_date, recurrence_week_ordinal, recurrence_day_of_week)
 values
     ('C1-ACT-1', 'col-1', 'Réunion hebdomadaire', 'MEETING', null, 1, 'MO'),
-    ('C1-ACT-2', 'col-1', 'Formation compost', 'TRAINING', '2026-01-15', null, null)
+    ('C1-ACT-2', 'col-1', 'Formation compost', 'TRAINING', '2026-01-15', null, null),
+    ('act-1', 'col-1', 'AG1', 'MEETING', null, 1, 'SA'),
+    ('act-2', 'col-1', 'Formation de base', 'TRAINING', null, 2, 'SU')
 on conflict (id) do nothing;
 
 insert into collectivity_activity_occupation (activity_id, member_occupation)
@@ -353,7 +355,14 @@ values
     ('C1-ACT-1', 'PRESIDENT'),
     ('C1-ACT-1', 'VICE_PRESIDENT'),
     ('C1-ACT-1', 'TREASURER'),
-    ('C1-ACT-1', 'SECRETARY')
+    ('C1-ACT-1', 'SECRETARY'),
+    ('act-1', 'JUNIOR'),
+    ('act-1', 'SENIOR'),
+    ('act-1', 'SECRETARY'),
+    ('act-1', 'TREASURER'),
+    ('act-1', 'VICE_PRESIDENT'),
+    ('act-1', 'PRESIDENT'),
+    ('act-2', 'JUNIOR')
 on conflict do nothing;
 
 insert into financial_account_balance (financial_account_id, at_date, amount)

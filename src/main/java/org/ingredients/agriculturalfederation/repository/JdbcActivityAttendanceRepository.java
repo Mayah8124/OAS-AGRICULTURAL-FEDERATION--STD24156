@@ -177,7 +177,9 @@ public class JdbcActivityAttendanceRepository implements ActivityAttendanceRepos
         }
 
         String sqlCheckExisting = "SELECT attendance_status FROM activity_member_attendance WHERE activity_id = ? AND member_id = ?";
-        String sqlInsert = "INSERT INTO activity_member_attendance (id, activity_id, member_id, attendance_status) VALUES (?, ?, ?, ?)";
+        // BUG-12 fix: use ON CONFLICT to handle the case where an UNDEFINED record exists — avoids UniqueConstraintViolation
+        String sqlInsert = "INSERT INTO activity_member_attendance (id, activity_id, member_id, attendance_status) VALUES (?, ?, ?, ?) " +
+                "ON CONFLICT (activity_id, member_id) DO UPDATE SET attendance_status = EXCLUDED.attendance_status";
         String sqlGetMemberInfo = "SELECT id, first_name, last_name, email, occupation FROM member WHERE id = ?";
 
         Connection connection = null;

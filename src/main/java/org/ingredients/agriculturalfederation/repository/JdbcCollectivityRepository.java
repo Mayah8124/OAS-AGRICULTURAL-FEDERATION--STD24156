@@ -80,27 +80,28 @@ public class JdbcCollectivityRepository implements CollectivityRepository {
         Connection conn = null;
         try {
             conn = dataSourceConfig.getConnection();
-            PreparedStatement stmt = conn.prepareStatement(sql);
-            stmt.setString(1, id);
-            ResultSet rs = stmt.executeQuery();
+            try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+                stmt.setString(1, id);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    if (rs.next()) {
+                        Collectivity collectivity = new Collectivity();
+                        collectivity.setId(rs.getObject("id").toString());
+                        collectivity.setLocation(rs.getString("location"));
+                        collectivity.setName(rs.getString("name"));
+                        Object numberObj = rs.getObject("number");
+                        collectivity.setNumber(numberObj == null ? null : ((Number) numberObj).intValue());
 
-            if (rs.next()) {
-                Collectivity collectivity = new Collectivity();
-                collectivity.setId(rs.getObject("id").toString());
-                collectivity.setLocation(rs.getString("location"));
-                collectivity.setName(rs.getString("name"));
-                Object numberObj = rs.getObject("number");
-                collectivity.setNumber(numberObj == null ? null : ((Number) numberObj).intValue());
+                        Member president = memberRepository.findById(rs.getObject("president_member_id").toString()).orElse(null);
+                        Member vicePresident = memberRepository.findById(rs.getObject("vice_president_member_id").toString()).orElse(null);
+                        Member treasurer = memberRepository.findById(rs.getObject("treasurer_member_id").toString()).orElse(null);
+                        Member secretary = memberRepository.findById(rs.getObject("secretary_member_id").toString()).orElse(null);
 
-                Member president = memberRepository.findById(rs.getObject("president_member_id").toString()).orElse(null);
-                Member vicePresident = memberRepository.findById(rs.getObject("vice_president_member_id").toString()).orElse(null);
-                Member treasurer = memberRepository.findById(rs.getObject("treasurer_member_id").toString()).orElse(null);
-                Member secretary = memberRepository.findById(rs.getObject("secretary_member_id").toString()).orElse(null);
+                        collectivity.setStructure(new CollectivityStructure(president, vicePresident, treasurer, secretary));
+                        collectivity.setMembers(findMembersByCollectivityId(id));
 
-                collectivity.setStructure(new CollectivityStructure(president, vicePresident, treasurer, secretary));
-                collectivity.setMembers(findMembersByCollectivityId(id));
-
-                return Optional.of(collectivity);
+                        return Optional.of(collectivity);
+                    }
+                }
             }
         } catch (SQLException e) {
             throw new RuntimeException("Error finding collectivity", e);
@@ -121,15 +122,16 @@ public class JdbcCollectivityRepository implements CollectivityRepository {
 
             try (PreparedStatement stmtSelect = conn.prepareStatement(sqlSelect)) {
                 stmtSelect.setString(1, collectivityId);
-                ResultSet rs = stmtSelect.executeQuery();
-                if (!rs.next()) {
-                    throw new CollectivityNotFoundException("Collectivity with ID " + collectivityId + " not found");
-                }
+                try (ResultSet rs = stmtSelect.executeQuery()) {
+                    if (!rs.next()) {
+                        throw new CollectivityNotFoundException("Collectivity with ID " + collectivityId + " not found");
+                    }
 
-                String currentName = rs.getString("name");
-                Object currentNumber = rs.getObject("number");
-                if (currentName != null || currentNumber != null) {
-                    throw new CollectivityIdentityAlreadyAssignedException("Collectivity identity is already assigned");
+                    String currentName = rs.getString("name");
+                    Object currentNumber = rs.getObject("number");
+                    if (currentName != null || currentNumber != null) {
+                        throw new CollectivityIdentityAlreadyAssignedException("Collectivity identity is already assigned");
+                    }
                 }
             }
 
@@ -159,13 +161,14 @@ public class JdbcCollectivityRepository implements CollectivityRepository {
         Connection conn = null;
         try {
             conn = dataSourceConfig.getConnection();
-            PreparedStatement stmt = conn.prepareStatement(sql);
-            for (String memberId : memberIds) {
-                stmt.setString(1, collectivityId);
-                stmt.setString(2, memberId);
-                stmt.addBatch();
+            try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+                for (String memberId : memberIds) {
+                    stmt.setString(1, collectivityId);
+                    stmt.setString(2, memberId);
+                    stmt.addBatch();
+                }
+                stmt.executeBatch();
             }
-            stmt.executeBatch();
         } catch (SQLException e) {
             throw new RuntimeException("Error linking members to collectivity", e);
         } finally {
@@ -179,11 +182,13 @@ public class JdbcCollectivityRepository implements CollectivityRepository {
         Connection conn = null;
         try {
             conn = dataSourceConfig.getConnection();
-            PreparedStatement stmt = conn.prepareStatement(sql);
-            stmt.setString(1, collectivityId);
-            ResultSet rs = stmt.executeQuery();
-            while (rs.next()) {
-                memberIds.add(rs.getObject("member_id").toString());
+            try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+                stmt.setString(1, collectivityId);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        memberIds.add(rs.getObject("member_id").toString());
+                    }
+                }
             }
         } catch (SQLException e) {
             throw new RuntimeException("Error finding members for collectivity", e);

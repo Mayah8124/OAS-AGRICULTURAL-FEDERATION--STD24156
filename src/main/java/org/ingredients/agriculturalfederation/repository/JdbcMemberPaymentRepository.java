@@ -194,7 +194,8 @@ public class JdbcMemberPaymentRepository implements MemberPaymentRepository {
                 c.id as collectivity_id,
                 COUNT(DISTINCT m.id) as total_members,
                 COUNT(DISTINCT CASE WHEN mp_first.first_payment_date >= ? THEN m.id END) as members_current_with_dues,
-                COUNT(DISTINCT CASE WHEN mp_first.first_payment_date >= ? THEN m.id END) as new_members_count
+                -- BUG-11 fix: count members who joined during the period (creation_date in range), not a duplicate of above
+                COUNT(DISTINCT CASE WHEN m.creation_date BETWEEN ? AND ? THEN m.id END) as new_members_count
             FROM collectivity c
             LEFT JOIN member m ON m.collectivity_id = c.id
             LEFT JOIN (
@@ -216,8 +217,9 @@ public class JdbcMemberPaymentRepository implements MemberPaymentRepository {
             
             stmt.setDate(1, java.sql.Date.valueOf(from));
             stmt.setDate(2, java.sql.Date.valueOf(from));
-            stmt.setDate(3, java.sql.Date.valueOf(from));
-            stmt.setDate(4, java.sql.Date.valueOf(to));
+            stmt.setDate(3, java.sql.Date.valueOf(to));
+            stmt.setDate(4, java.sql.Date.valueOf(from));
+            stmt.setDate(5, java.sql.Date.valueOf(to));
             
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
